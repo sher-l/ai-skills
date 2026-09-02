@@ -510,13 +510,15 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     motes = Array.from({length:DUST_N},()=>{
       const ang = Math.random()*Math.PI*2;
       const sp = DUST_SPEED*(0.25+Math.random()*0.5);            /* 慢速漂浮 */
+      const ratio = 0.5 + Math.pow(Math.random(),1.6);           /* 偏小分布：小点多、大点少 */
       return {
         x:Math.random()*W, y:Math.random()*H,
         vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp,                /* 初速：随机方向 */
         sp,
         tang:Math.random()*Math.PI*2,                             /* 目标方向：定期重选 */
         reT:180+Math.random()*300,
-        r:DUST_SIZE*(0.5+Math.pow(Math.random(),1.6)),           /* 偏小分布：小点多、大点少 */
+        r:DUST_SIZE*ratio,
+        s:ratio*ratio,                                            /* 引力强度 ∝ 大小（面积） */
         deep:Math.random()<.35,
         phase:Math.random()*Math.PI*2,                            /* 呼吸相位 */
         freq:0.8+Math.random()*1.2                                /* 呼吸频率 */
@@ -540,9 +542,11 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
       p.hx += p.hvx; p.hy += p.hvy;
       if(p.hx<0||p.hx>W) p.hvx *= -1;
       if(p.hy<0||p.hy>H) p.hvy *= -1;
-      p.vx += (p.hx - p.x)*0.012;
-      p.vy += (p.hy - p.y)*0.012;
-      p.vx *= 0.9; p.vy *= 0.9;
+      p.vx += (p.hx - p.x)*0.0015;
+      p.vy += (p.hy - p.y)*0.0015;
+      p.vx *= 0.92; p.vy *= 0.92;
+      const ns = Math.hypot(p.vx,p.vy);
+      if(ns > 2.5){ p.vx *= 2.5/ns; p.vy *= 2.5/ns; }
       p.x += p.vx; p.y += p.vy;
     }
 
@@ -572,22 +576,26 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
       for(const n of nodes){
         const dx=n.x-m.x, dy=n.y-m.y, dist=Math.hypot(dx,dy)||1;
         if(dist < DUST_LINK){
-          /* 连上去：粉尘到节点的金色细线 */
+          /* 连上去：金色细线，粗细与亮度随粉尘大小（越大越强） */
           const o=(1-dist/DUST_LINK)*.5*breath;
           if(o>0.02){
             ctx.strokeStyle=`rgba(232,201,122,${o})`;
-            ctx.lineWidth=1;
+            ctx.lineWidth=0.8 + m.s*0.6;
             ctx.beginPath(); ctx.moveTo(m.x,m.y); ctx.lineTo(n.x,n.y); ctx.stroke();
           }
-          /* 拖拽：节点被粉尘拉动（限幅 30px，超出后弹簧接管） */
-          const off = Math.hypot(n.x-n.hx, n.y-n.hy);
-          if(off < 30){
-            n.vx += (m.x-n.x)/dist*0.02;
-            n.vy += (m.y-n.y)/dist*0.04;
-          }
+          /* 拖拽（强度 ∝ 粉尘大小 s）：
+             速度耦合让节点跟着粉尘走——大点能把节点整段拖走；
+             绳索张力在间距超过 40px 后渐增，把节点拉向粉尘。
+             多个粉尘同时拉一个节点时形成合力对抗锚点弹簧：
+             势均力敌则僵持（角力），方向拉扯把距离撑过连线范围则崩断（挣脱）。 */
+          n.vx += (m.vx-n.vx)*0.012*m.s;
+          n.vy += (m.vy-n.vy)*0.012*m.s;
+          const tension = Math.min(1, Math.max(0, (dist-40)/60));
+          n.vx += (m.x-n.x)/dist*0.005*m.s*tension;
+          n.vy += (m.y-n.y)/dist*0.005*m.s*tension;
           n.linked = true;
         } else if(n.linked){
-          /* 挣脱：沿远离粉尘的方向弹开，随后弹簧拉回锚点 */
+          /* 挣脱：沿远离粉尘的方向弹开，软弹簧随后把节点拉回锚点（带回弹） */
           n.vx += (n.x-m.x)/dist*0.3;
           n.vy += (n.y-m.y)/dist*0.3;
           n.linked = false;
