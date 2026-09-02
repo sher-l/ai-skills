@@ -1,0 +1,13 @@
+{
+  "schema_version": "report-materials-0.1",
+  "mode": "one_off",
+  "materials": [
+    {"slot": "analysis.scope", "path": "materials/cohort.tsv", "kind": "table", "unit": "sample", "source": "user supplied"},
+    {"slot": "figure.F1.source", "path": "materials/figure.png", "kind": "figure", "source": "user supplied"}
+  ],
+  "facts": {
+    "comparison": {"target": "case", "reference": "control", "direction": "case-control"},
+    "limitations": ["材料未包含外部验证"]
+  },
+  "unresolved": []
+}

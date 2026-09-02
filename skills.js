@@ -28,4 +28,51 @@
  * ];
  */
 
-window.AI_SKILLS = [];
+window.AI_SKILLS = [
+  {
+    name: "bio-code-standard",
+    cat: "bio",
+    catLabel: "生信分析",
+    status: "stable",
+    tags: ["R", "Python", "source-review", "statistics", "provenance"],
+    repo: "https://github.com/sher-l/ai-skills/tree/main/skills/bio-code-standard",
+    zh: {
+      t: "生信分析代码规范",
+      d: "先核对官方定义、源码实现与真实执行证据，再规范 R/Python 计算、统计、绘图、配置和结果交接。"
+    },
+    en: {
+      t: "Bioinformatics code standard",
+      d: "Source-first review, R/Python contracts, statistics, plots, and reproducible evidence."
+    }
+  },
+  {
+    name: "bio-report-writing",
+    cat: "bio",
+    status: "stable",
+    tags: ["report-coder", "QMD", "DOCX", "captions", "QA"],
+    repo: "https://github.com/sher-l/ai-skills/tree/main/skills/bio-report-writing",
+    zh: {
+      t: "生信报告 coder",
+      d: "编写可复用的报告模板与 R/Python renderer，插入真实表格和图件，生成图注并完成 DOCX/视觉验收。"
+    },
+    en: {
+      t: "Bioinformatics report coder",
+      d: "Reusable report templates, renderers, tables, captions, and evidence-aware DOCX QA."
+    }
+  },
+  {
+    name: "module-development-scheduler",
+    cat: "bio",
+    status: "stable",
+    tags: ["routing", "Matt", "workflow", "gates"],
+    repo: "https://github.com/sher-l/ai-skills/tree/main/skills/module-development-scheduler",
+    zh: {
+      t: "生信模块开发调度",
+      d: "把新建、迁移、优化和审查任务编译为确定的阶段、coder 顺序、领域门禁与唯一生命周期 owner。"
+    },
+    en: {
+      t: "Module development scheduler",
+      d: "Deterministic routing, coder order, domain checks, and one lifecycle owner for bioinformatics modules."
+    }
+  }
+];

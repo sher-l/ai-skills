@@ -1,0 +1,28 @@
+{
+  "schema_version": "0.1.0",
+  "fixed": {
+    "sections": ["summary", "scope", "methods", "qc", "results", "conclusion", "limitations", "outputs", "references", "versions"],
+    "prose_owner": "report_template.qmd",
+    "caption_style": "declarative"
+  },
+  "dynamic": {
+    "title": {"type": "string", "source": "pack.title", "required": true},
+    "scope": {"type": "string", "source": "analysis_points[].scope", "required": true},
+    "method": {"type": "object", "source": "analysis_points[].method+parameters", "required": true},
+    "results": {"type": "rows", "source": "analysis_points[].results", "required": true},
+    "limitations": {"type": "string[]", "source": "analysis_points[].limitations", "required": true},
+    "table.T1": {
+      "type": "table",
+      "source": "analysis_points[].results",
+      "fields": ["columns", "rows", "units", "precision", "caption"],
+      "condition": "published"
+    },
+    "figure.F1": {
+      "type": "figure",
+      "source": "analysis_points[].figure_table_refs[]",
+      "fields": ["id", "path", "object", "groups", "axes", "units", "legend", "n", "boundary"],
+      "condition": "published"
+    }
+  },
+  "empty_policy": "EVIDENCE_NEEDED for required slots; omit a whole conditional artifact with a recorded reason"
+}

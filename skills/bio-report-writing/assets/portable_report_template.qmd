@@ -1,0 +1,87 @@
+---
+title: "分析报告"
+format:
+  docx:
+    reference-doc: reference.docx
+    toc: false
+params:
+  title: "分析报告"
+  summary: ""
+  scope: ""
+  method_text: ""
+  result_text: ""
+  limitation_text: ""
+  figure_path: ""
+  figure_caption: ""
+  table_caption: ""
+  output_text: ""
+  references_text: ""
+  versions_text: ""
+  table_rows:
+    value: []
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+required <- c("title", "summary", "scope", "method_text", "result_text", "limitation_text")
+if (any(!vapply(required, function(key) is.character(params[[key]]) && nzchar(params[[key]]), logical(1)))) {
+  stop("required report slots are missing")
+}
+if (nzchar(params$figure_path) && !file.exists(params$figure_path)) {
+  stop("figure_path must point to a published source figure")
+}
+rows <- params$table_rows
+if (length(rows)) {
+  rows <- do.call(rbind, lapply(rows, as.data.frame, stringsAsFactors = FALSE))
+}
+```
+
+# `r params$title`
+
+## 摘要
+
+`r params$summary`
+
+## 数据范围与分析边界
+
+`r params$scope`
+
+## 材料与方法
+
+`r params$method_text`
+
+## 分析结果与解读
+
+`r params$result_text`
+
+```{r result-table, results='asis'}
+if (length(rows)) {
+  knitr::kable(rows, booktabs = FALSE)
+  cat(sprintf("\n\n*表 1. %s*\n", params$table_caption))
+}
+```
+
+## 图件
+
+```{r figure, fig.align='center'}
+if (nzchar(params$figure_path)) {
+  knitr::include_graphics(params$figure_path, auto_pdf = FALSE)
+  cat(sprintf("\n\n*图 1. %s*\n", params$figure_caption))
+}
+```
+
+## 局限、未完成与待验证
+
+`r params$limitation_text`
+
+## 输出文件说明
+
+`r params$output_text`
+
+## 参考文献
+
+`r params$references_text`
+
+## 软件与资源版本
+
+`r params$versions_text`

@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "module", "task_type", "work_kind", "quality_profile", "effort_profile", "max_repair_rounds", "route", "phase", "loaded_skills", "required_checks", "blocked_reasons", "next_owner"],
+  "properties": {
+    "schema_version": {"const": "0.1.0"},
+    "module": {"type": "string", "minLength": 1},
+    "task_type": {"enum": ["new", "migrate", "optimize", "substantial_change", "review"]},
+    "work_kind": {"enum": ["auto", "code", "report", "both", "review"]},
+    "report_context": {"enum": ["none", "one_off", "module_reusable"]},
+    "quality_profile": {"enum": ["draft", "release"]},
+    "effort_profile": {"enum": ["mechanical", "scientific_review"]},
+    "max_repair_rounds": {"type": "integer", "minimum": 0, "maximum": 2},
+    "max_checkpoint_rounds": {"type": "integer", "minimum": 0},
+    "max_regression_rounds": {"type": "integer", "minimum": 0},
+    "repair_round": {"type": "integer", "minimum": 0},
+    "checkpoint_round": {"type": "integer", "minimum": 0},
+    "regression_round": {"type": "integer", "minimum": 0},
+    "rounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repair", "checkpoint", "regression"],
+      "properties": {
+        "repair": {"$ref": "#/$defs/boundedRound"},
+        "checkpoint": {"$ref": "#/$defs/boundedRound"},
+        "regression": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["current", "max", "unbounded"],
+          "properties": {
+            "current": {"type": "integer", "minimum": 0},
+            "max": {"type": "integer", "minimum": 0},
+            "unbounded": {"type": "boolean"}
+          }
+        }
+      }
+    },
+    "route": {"enum": ["ask-matt", "fork", "goal", "BLOCKED"]},
+    "phase": {"enum": ["scope", "build", "draft", "finish"]},
+    "plan_phase": {"enum": ["start", "build", "draft", "finish"]},
+    "entry_skill": {"const": "develop-module"},
+    "owner": {"enum": ["matt-executor", "user_decision"]},
+    "adapter_skills": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["module-development-scheduler", "bio-code-standard", "bio-report-writing"]}},
+    "loaded_skills": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["module-development-scheduler", "bio-code-standard", "bio-report-writing"]}},
+    "execution_order": {"type": "array", "uniqueItems": true, "items": {"enum": ["source_review", "analysis_coder", "report_coder"]}},
+    "coder_order": {"type": "array", "uniqueItems": true, "items": {"enum": ["analysis_coder", "report_coder"]}},
+    "finish_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requires_review", "requires_full"],
+      "properties": {
+        "requires_review": {"type": "boolean"},
+        "requires_full": {"type": "boolean"}
+      }
+    },
+    "development_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "phase"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "phase": {"enum": ["start", "build", "draft", "finish"]}
+      }
+    },
+    "required_checks": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "blocked_reasons": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "next_owner": {"enum": ["matt-executor", "user_decision"]}
+  },
+  "$defs": {
+    "boundedRound": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["current", "max"],
+      "properties": {
+        "current": {"type": "integer", "minimum": 0},
+        "max": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "schema_version": "0.1.0",
+  "module": "example_module",
+  "quality_profile": "draft",
+  "result_layout": "flat",
+  "evidence_targets": [{"id": "ET-01", "title": "差异表达结果", "analysis_point_ids": ["AP-01"]}],
+  "analysis_points": [{
+    "id": "AP-01",
+    "title": "差异表达结果",
+    "scope": "case 与 control 的供体级表达矩阵",
+    "qc": "输入字段和样本顺序通过检查",
+    "inputs": [{"id": "IN-01", "path": "input/input.tsv", "identity": "example-dataset"}],
+    "method": {"name": "limma", "version": "3.58.0", "citation": "官方文档"},
+    "parameters": {"fdr": 0.05, "effect_expression": "logFC"},
+    "statistical_unit": "sample",
+    "comparison": {"target": "case", "reference": "control", "metric": "logFC", "direction": "case - control"},
+    "results": [{"name": "significant_features", "value": 4, "unit": "gene", "source": "result/01.DEG_all.csv"}],
+    "outputs": [{"id": "OUT-01", "path": "result/01.DEG_all.csv", "kind": "table", "published": true, "purpose": "差异结果表", "consumers": ["project_analyst"]}],
+    "figure_table_refs": [],
+    "interpretation_level": "descriptive",
+    "interpretation": "当前数据范围内的描述性差异结果",
+    "next_step": "作为后续通路分析的输入",
+    "limitations": ["样本量和外部验证范围"],
+    "status": "complete"
+  }]
+}

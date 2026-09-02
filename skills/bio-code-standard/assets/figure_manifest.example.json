@@ -1,0 +1,27 @@
+{
+  "schema_version": "0.1.0",
+  "result_layout": "flat",
+  "figures": [
+    {
+      "id": "Figure 1",
+      "source": "result/02.volcano.png",
+      "formats": ["png", "pdf"],
+      "width": 6.5,
+      "height": 4.3,
+      "dpi": 300,
+      "font": "Arial with Chinese fallback",
+      "renderer": "cairo",
+      "source_code": "scripts/plot/main.R",
+      "data_sources": ["result/01.DEG_all.csv"],
+      "run_record": "run_record.json",
+      "provenance": {
+        "source_code": "scripts/plot/main.R",
+        "data_sources": ["result/01.DEG_all.csv"],
+        "run_record": "run_record.json",
+        "selection": "declared filter expression",
+        "groups": ["case", "control"]
+      },
+      "panels": ["A", "B"]
+    }
+  ]
+}

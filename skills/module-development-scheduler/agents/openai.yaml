@@ -1,0 +1,4 @@
+interface:
+  display_name: "模块开发调度"
+  short_description: "为 develop-module 选择阶段与领域门禁"
+  default_prompt: "使用 $module-development-scheduler 的 mechanical 路由：生成并验证一个 route_plan，选择唯一 Matt owner 和已声明 adapter checks；不创建第二套生命周期或临时边界。"

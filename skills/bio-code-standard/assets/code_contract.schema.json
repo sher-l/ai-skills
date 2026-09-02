@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "module", "description", "help", "quality_profile", "effort_profile", "max_repair_rounds", "result_layout", "canonical_source", "source_review", "stages", "inputs", "outputs", "evidence_pack"],
+  "properties": {
+    "schema_version": {"const": "0.1.0"},
+    "module": {"type": "string", "minLength": 1},
+    "description": {"type": "string", "minLength": 1},
+    "help": {"type": "object", "additionalProperties": false, "required": ["summary", "commands"], "properties": {"summary": {"type": "string", "minLength": 1}, "commands": {"type": "object", "additionalProperties": {"type": "string"}}}},
+    "quality_profile": {"enum": ["draft", "release"]},
+    "effort_profile": {"enum": ["mechanical", "scientific_review"]},
+    "max_repair_rounds": {"type": "integer", "minimum": 0, "maximum": 2},
+    "result_layout": {"enum": ["flat", "module_contract"]},
+    "canonical_source": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+    "source_review": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:[\\\\/])(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+    "stages": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["id", "purpose", "inputs", "outputs", "method", "parameters", "seed", "non_degenerate"], "properties": {"id": {"type": "string", "minLength": 1}, "purpose": {"type": "string", "minLength": 1}, "inputs": {"type": "array"}, "outputs": {"type": "array", "items": {"$ref": "#/$defs/output"}}, "method": {"type": "object"}, "parameters": {"type": "object"}, "seed": {}, "non_degenerate": {"type": "string", "minLength": 1}, "provenance": {"type": "object"}, "lineage": {"type": "array"}, "error_policy": {"type": "object"}}}},
+    "inputs": {"type": "array"},
+    "outputs": {"type": "array", "items": {"$ref": "#/$defs/output"}},
+    "statistics": {"type": "object", "additionalProperties": false, "required": ["statistical_unit", "comparison", "correction", "thresholds"], "properties": {"statistical_unit": {"type": "string", "minLength": 1}, "comparison": {"type": "object"}, "correction": {"type": "string", "minLength": 1}, "thresholds": {"type": "object"}}},
+    "plot": {"type": "object", "additionalProperties": false, "required": ["figure_manifest"], "properties": {"figure_manifest": {"type": "string", "minLength": 1}}},
+    "environment": {"type": "object"},
+    "provenance": {"type": "object"},
+    "evidence_pack": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "output": {
+      "type": "object",
+      "required": ["id", "path", "purpose", "consumers"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "purpose": {"type": "string", "minLength": 1},
+        "consumers": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  }
+}

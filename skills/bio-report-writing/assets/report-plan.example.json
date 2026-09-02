@@ -1,0 +1,28 @@
+{
+  "schema_version": "0.1.0",
+  "module": "example_module",
+  "mode": "module",
+  "quality_profile": "draft",
+  "effort_profile": "mechanical",
+  "max_repair_rounds": 2,
+  "result_layout": "flat",
+  "title": "示例分析结果",
+  "audience": "项目研究人员",
+  "evidence_pack": "analysis_evidence_pack.json",
+  "evidence_targets": [
+    {"id": "ET-01", "title": "主要分析结果", "analysis_point_ids": ["AP-01"]}
+  ],
+  "sections": [
+    {"id": "summary", "title": "摘要", "required": true, "analysis_point_ids": [], "semantic": "summary"},
+    {"id": "scope", "title": "数据范围与分析边界", "required": true, "analysis_point_ids": [], "semantic": "scope"},
+    {"id": "methods", "title": "材料与方法", "required": true, "analysis_point_ids": ["AP-01"], "semantic": "method"},
+    {"id": "qc", "title": "质控与异常", "required": true, "analysis_point_ids": ["AP-01"], "semantic": "qc"},
+    {"id": "results", "title": "分析结果与解读", "required": true, "analysis_point_ids": ["AP-01"], "semantic": ["results", "interpretation"]},
+    {"id": "conclusion", "title": "综合结论", "required": true, "analysis_point_ids": ["AP-01"], "semantic": "interpretation"},
+    {"id": "limitations", "title": "局限、未完成与待验证", "required": true, "analysis_point_ids": ["AP-01"], "semantic": "limitations"},
+    {"id": "outputs", "title": "输出文件说明", "required": true, "analysis_point_ids": [], "semantic": "outputs"},
+    {"id": "references", "title": "参考文献", "required": true, "analysis_point_ids": [], "semantic": "references"},
+    {"id": "versions", "title": "软件与资源版本", "required": true, "analysis_point_ids": [], "semantic": "versions"}
+  ],
+  "output_policy": {"report_file": "report/analysis_report.docx", "include_pdf": false}
+}

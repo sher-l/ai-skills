@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+"""Copy into MODULE/scripts/report/generate_report.py; keep slots module-specific."""
+from pathlib import Path
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+
+
+def generate_report(root: Path, pack_file: Path, template_dir: Path, output_dir: Path) -> Path:
+    root, template_dir, output_dir = map(Path, (root, template_dir, output_dir))
+    pack = json.loads(pack_file.read_text(encoding="utf-8"))
+    point = pack["analysis_points"][0]
+    if pack.get("quality_profile") != "release" or not point.get("limitations"):
+        raise ValueError("release report requires complete evidence")
+
+    def source(rel: str) -> Path:
+        path = Path(rel)
+        candidate = (root / path).resolve()
+        if path.is_absolute() or root.resolve() not in candidate.parents or not candidate.is_file():
+            raise ValueError(f"published path is missing or escapes root: {rel}")
+        return candidate
+
+    figure = point.get("figure_table_refs", [None])[0]
+    params = {
+        "title": pack.get("title", "分析报告"),
+        "summary": point["interpretation"],
+        "scope": point["scope"],
+        "method_text": point["method"]["name"],
+        "result_text": "; ".join(str(row["name"]) for row in point["results"]),
+        "limitation_text": "；".join(point["limitations"]),
+        "figure_path": str(source(figure["path"])) if figure else "",
+        "figure_caption": figure.get("caption", point["title"]) if figure else "",
+        "table_caption": point["title"],
+        "output_text": "、".join(item["path"] for item in point["outputs"]),
+        "references_text": "；".join(item["name"] for item in pack.get("references", [])),
+        "versions_text": "；".join(f"{item['name']} {item['version']}" for item in pack.get("versions", [])),
+        "table_rows": point["results"],
+    }
+    output_dir.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="report-render-") as temporary:
+        work = Path(temporary)
+        shutil.copy2(template_dir / "report_template.qmd", work / "report_template.qmd")
+        shutil.copy2(template_dir / "reference.docx", work / "reference.docx")
+        (work / "params.json").write_text(json.dumps(params, ensure_ascii=False), encoding="utf-8")
+        subprocess.run(
+            ["quarto", "render", "report_template.qmd", "--to", "docx",
+             "--execute-params", "params.json", "--output", "report.docx"],
+            cwd=work, check=True,
+        )
+        destination = output_dir / "MODULE_report.docx"
+        shutil.copy2(work / "report.docx", destination)
+    return destination
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 5:
+        raise SystemExit("usage: generate_report.py INPUT_ROOT PACK.json TEMPLATE_DIR OUTPUT_DIR")
+    generate_report(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]))
