@@ -38,6 +38,18 @@
   --serif:"Crimson Text",Georgia,"Songti SC","SimSun",serif;
   --sans:"Inter","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
   --mono:"JetBrains Mono","Cascadia Code",Consolas,monospace;
+  /* —— 动效参数：粒子数量/尺寸/时长、光晕、毛玻璃、流光，统一在此调整 —— */
+  --fx-dust-count:26;
+  --fx-dust-size:4px;
+  --fx-dust-duration:15s;
+  --fx-dust-travel:640px;
+  --fx-glow-size:560px;
+  --fx-glow-duration:6s;
+  --fx-blur:30px;
+  --fx-shimmer-duration:3.2s;
+  --dust-deep:#2F7A5F;
+  --dust-mid:#3C9373;
+  --dust-light:#6FC7A4;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -50,10 +62,12 @@ a{color:var(--bio);text-decoration:none}
 @media (prefers-reduced-motion: reduce){
   html{scroll-behavior:auto}
   .reveal{opacity:1;transform:none;transition:none}
+  .hero-glow,.dust,.btn--primary::after{animation:none}
+  .dust{opacity:.35}
 }
 
 /* ---------- Nav ---------- */
-.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(253,251,247,.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(253,251,247,.72);backdrop-filter:blur(var(--fx-blur));-webkit-backdrop-filter:blur(var(--fx-blur));border-bottom:1px solid var(--border);box-shadow:inset 0 1px 0 rgba(255,255,255,.65),0 8px 32px rgba(10,31,26,.08)}
 .nav__inner{max-width:1120px;margin:0 auto;padding:0 24px;height:60px;display:flex;align-items:center;gap:28px}
 .nav__logo{display:flex;align-items:center;gap:9px;font-family:var(--serif);font-size:22px;font-weight:700;color:var(--ink);letter-spacing:.2px}
 .nav__logo .dot{width:9px;height:9px;border-radius:50%;background:var(--bio-strong);box-shadow:0 0 0 3px var(--bio-pale)}
@@ -69,7 +83,25 @@ a{color:var(--bio);text-decoration:none}
 
 /* ---------- Hero ---------- */
 .hero{position:relative;background:linear-gradient(160deg,var(--ink) 0%,var(--ink-2) 55%,var(--ink-3) 100%);color:#E9F2ED;overflow:hidden;padding:150px 0 90px}
-.hero__canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55}
+/* 墨绿粒子 + 金色光晕动效层 */
+.hero-fx{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.hero-glow{position:absolute;width:var(--fx-glow-size);height:var(--fx-glow-size);border-radius:50%;filter:blur(80px);will-change:transform,opacity;animation:pulseGlow var(--fx-glow-duration) ease-in-out infinite}
+.hero-glow--gold{left:50%;top:38%;background:radial-gradient(circle,rgba(200,150,62,.16),transparent 70%)}
+.hero-glow--green{width:calc(var(--fx-glow-size)*.72);height:calc(var(--fx-glow-size)*.72);left:74%;top:72%;background:radial-gradient(circle,rgba(111,199,164,.13),transparent 70%);animation-delay:calc(var(--fx-glow-duration)/-2)}
+@keyframes pulseGlow{
+  0%,100%{opacity:.4;transform:translate(-50%,-50%) scale(1)}
+  50%{opacity:.7;transform:translate(-50%,-50%) scale(1.1)}
+}
+.hero-dust{position:absolute;inset:0}
+.dust{position:absolute;bottom:-12px;width:var(--fx-dust-size);height:var(--fx-dust-size);border-radius:50%;background:linear-gradient(135deg,var(--dust-mid),var(--dust-light));box-shadow:0 0 6px rgba(111,199,164,.8);opacity:0;animation:floatDust var(--fx-dust-duration) linear infinite;will-change:transform,opacity}
+.dust--deep{background:linear-gradient(135deg,var(--dust-deep),var(--dust-mid));box-shadow:0 0 6px rgba(60,147,115,.65)}
+@keyframes floatDust{
+  0%{transform:translate(0,0);opacity:0}
+  8%{opacity:.85}
+  45%{opacity:.6}
+  80%{opacity:.35}
+  100%{transform:translate(48px,calc(var(--fx-dust-travel)*-1));opacity:0}
+}
 .hero__inner{position:relative;max-width:1120px;margin:0 auto;padding:0 24px;text-align:center}
 .hero__badge{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12.5px;color:var(--gold-light);border:1px solid rgba(200,150,62,.4);background:rgba(200,150,62,.08);border-radius:999px;padding:6px 16px;margin-bottom:26px}
 .hero__badge .pulse{width:7px;height:7px;border-radius:50%;background:var(--gold-light);animation:pulse 2s infinite}
@@ -79,16 +111,25 @@ a{color:var(--bio);text-decoration:none}
 .hero__subtitle{max-width:640px;margin:22px auto 0;font-size:16.5px;color:#AECBBE;line-height:1.85}
 .hero__actions{display:flex;gap:14px;justify-content:center;margin-top:36px;flex-wrap:wrap}
 .btn{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:600;border-radius:10px;padding:12px 26px;transition:all .2s;cursor:pointer;border:1px solid transparent}
-.btn--primary{background:var(--bio-strong);color:#fff}
-.btn--primary:hover{background:#4AA985;transform:translateY(-1px)}
+.btn--primary{position:relative;overflow:hidden;background:linear-gradient(135deg,#3C9373,#2F7A5F);color:#fff}
+.btn--primary::after{content:"";position:absolute;top:0;bottom:0;left:-60%;width:45%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.38),transparent);transform:skewX(-18deg) translateX(0);animation:shimmerSweep var(--fx-shimmer-duration) ease-in-out infinite;will-change:transform}
+@keyframes shimmerSweep{
+  0%,55%{transform:skewX(-18deg) translateX(0)}
+  100%{transform:skewX(-18deg) translateX(460%)}
+}
+.btn--primary:hover{background:linear-gradient(135deg,#4AA985,#2F7A5F);transform:translateY(-1px);box-shadow:0 12px 28px rgba(200,150,62,.35)}
 .btn--ghost{border-color:rgba(233,242,237,.3);color:#E9F2ED}
 .btn--ghost:hover{border-color:var(--gold-light);color:var(--gold-light)}
 .hero__stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(233,242,237,.14);border:1px solid rgba(233,242,237,.14);border-radius:14px;overflow:hidden;max-width:720px;margin:56px auto 0}
-.hero__stat{background:rgba(10,31,26,.55);padding:22px 12px;backdrop-filter:blur(4px)}
+.hero__stat{background:rgba(10,31,26,.5);padding:22px 12px;backdrop-filter:blur(var(--fx-blur));-webkit-backdrop-filter:blur(var(--fx-blur));box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
 .hero__stat .num{font-family:var(--serif);font-size:34px;font-weight:700;color:#fff}
 .hero__stat .num span{color:var(--gold-light)}
 .hero__stat .lbl{font-size:13px;color:#9DB8AC;margin-top:2px}
-@media (max-width:640px){.hero__stats{grid-template-columns:1fr}.hero{padding:120px 0 70px}}
+@media (max-width:640px){
+  html{--fx-glow-size:380px;--fx-dust-count:12;--fx-shimmer-duration:4.5s}
+  .hero__stats{grid-template-columns:1fr}
+  .hero{padding:120px 0 70px}
+}
 
 /* ---------- Section headers ---------- */
 .sec{padding:84px 0}
@@ -188,7 +229,11 @@ a{color:var(--bio);text-decoration:none}
 
 <!-- ================= HERO ================= -->
 <header class="hero" id="top">
-  <canvas class="hero__canvas" id="heroCanvas"></canvas>
+    <div class="hero-fx" aria-hidden="true">
+      <div class="hero-glow hero-glow--gold"></div>
+      <div class="hero-glow hero-glow--green"></div>
+      <div class="hero-dust" id="heroDust"></div>
+    </div>
   <div class="hero__inner">
     <div class="hero__badge"><span class="pulse"></span><span data-i18n="hero_badge">🚧 建设中 · 技能陆续添加</span></div>
     <h1 class="hero__title" data-i18n-html="hero_title">我的<span class="bio">生信</span> AI 技能库</h1>
@@ -259,7 +304,6 @@ a{color:var(--bio);text-decoration:none}
       <a href="https://github.com/sher-l/bio-dev/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
     </div>
     <div class="footer__meta">
-      <span data-i18n="f_meta">单文件静态页面 · 无构建依赖 · 页面设计参考</span> <a href="https://yuan1z0825.github.io/nature-skills/" target="_blank" rel="noopener">nature-skills</a> · <a href="https://tt-a1i.github.io/archify/" target="_blank" rel="noopener">archify</a><br>
       <span class="mono">© 2026 sher-l</span>
     </div>
   </div>
@@ -283,7 +327,7 @@ const I18N = {
     qs_label:"02 · Quick Start", qs_title:"快速开始", qs_desc:"安装技能后，把提示词直接交给你的 AI Agent。",
     copy:"复制", copied:"已复制 ✓",
     inst_label:"03 · Installation", inst_title:"安装指南", inst_desc:"支持主流 Agent 平台，一条命令完成全局安装。",
-    f_blog:"博客", f_meta:"单文件静态页面 · 无构建依赖 · 页面设计参考"
+    f_blog:"博客"
   },
   en: {
     nav_skills:"Skills", nav_quickstart:"Quick Start", nav_install:"Install", nav_github:"GitHub",
@@ -299,7 +343,7 @@ const I18N = {
     qs_label:"02 · Quick Start", qs_title:"Quick Start", qs_desc:"After installing, hand the prompt to your AI agent.",
     copy:"Copy", copied:"Copied ✓",
     inst_label:"03 · Installation", inst_title:"Installation", inst_desc:"Works with mainstream agent platforms — one command for a global install.",
-    f_blog:"Blog", f_meta:"Single-file static page · zero build dependencies · design inspired by"
+    f_blog:"Blog"
   }
 };
 
@@ -439,49 +483,26 @@ const io = new IntersectionObserver(entries=>{
 },{ threshold:.12 });
 document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
 
-/* ============ Hero particle canvas ============ */
+/* ============ Hero 墨绿粒子（数量/时长由 CSS 变量 --fx-* 控制） ============ */
 (function(){
-  const canvas = $("#heroCanvas");
-  if(!canvas || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const ctx = canvas.getContext("2d");
-  let W, H, nodes = [], raf;
-  const N = window.innerWidth < 700 ? 34 : 64;
-  function resize(){
-    W = canvas.width = canvas.offsetWidth;
-    H = canvas.height = canvas.offsetHeight;
+  const host = $("#heroDust");
+  if(!host || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const root = getComputedStyle(document.documentElement);
+  let n = parseInt(root.getPropertyValue("--fx-dust-count"), 10) || 24;
+  if(window.innerWidth < 700) n = Math.round(n * 0.5); /* 移动端降低动效复杂度 */
+  const frag = document.createDocumentFragment();
+  for(let i = 0; i < n; i++){
+    const d = document.createElement("span");
+    d.className = "dust" + (Math.random() < 0.35 ? " dust--deep" : "");
+    d.style.left = (Math.random() * 100).toFixed(2) + "%";
+    const dur = 12 + Math.random() * 6;
+    d.style.animationDuration = dur.toFixed(1) + "s";
+    d.style.animationDelay = (-Math.random() * dur).toFixed(1) + "s"; /* 负延迟让粒子场即刻铺满 */
+    const size = 3 + Math.random() * 2;
+    d.style.width = d.style.height = size.toFixed(1) + "px";
+    frag.appendChild(d);
   }
-  function init(){
-    nodes = Array.from({length:N},()=>({
-      x:Math.random()*W, y:Math.random()*H,
-      vx:(Math.random()-.5)*.35, vy:(Math.random()-.5)*.35,
-      r:Math.random()*1.6+.8,
-      gold:Math.random()<.12
-    }));
-  }
-  function step(){
-    ctx.clearRect(0,0,W,H);
-    for(const p of nodes){
-      p.x+=p.vx; p.y+=p.vy;
-      if(p.x<0||p.x>W) p.vx*=-1;
-      if(p.y<0||p.y>H) p.vy*=-1;
-    }
-    for(let i=0;i<nodes.length;i++) for(let j=i+1;j<nodes.length;j++){
-      const a=nodes[i],b=nodes[j],dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy;
-      if(d2<130*130){
-        const o=(1-Math.sqrt(d2)/130)*.28;
-        ctx.strokeStyle=`rgba(111,199,164,${o})`;
-        ctx.lineWidth=1;
-        ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
-      }
-    }
-    for(const p of nodes){
-      ctx.fillStyle = p.gold ? "rgba(232,201,122,.85)" : "rgba(111,199,164,.8)";
-      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
-    }
-    raf = requestAnimationFrame(step);
-  }
-  resize(); init(); step();
-  window.addEventListener("resize",()=>{ cancelAnimationFrame(raf); resize(); init(); step(); });
+  host.appendChild(frag);
 })();
 
 applyI18n();
