@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>bio-dev · 生信技能库</title>
-<meta name="description" content="bio-dev —— sher-l 的生物信息学 AI 技能库：转录组、单细胞、GBD、孟德尔随机化等分析技能，供 Codex / Claude Code 等 Agent 直接调用。">
-<meta property="og:title" content="bio-dev · 生信技能库">
-<meta property="og:description" content="sher-l 的生物信息学 AI 技能库。">
+<title>ai-skills · 我的 AI 技能库</title>
+<meta name="description" content="ai-skills —— sher-l 的 AI 技能库：生信分析、效率工具等技能板块，供 Codex / Claude Code 等 Agent 直接调用。">
+<meta property="og:title" content="ai-skills · 我的 AI 技能库">
+<meta property="og:description" content="sher-l 的 AI 技能库。">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A1F1A'/%3E%3Cpath d='M10 8c0 6 12 10 12 16M22 8c0 6-12 10-12 16' stroke='%233C9373' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3Cpath d='M12 11h8M12 16h8M12 21h8' stroke='%23C8963E' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -110,7 +110,7 @@ a{color:var(--bio);text-decoration:none}
 .btn--primary:hover{background:linear-gradient(135deg,#4AA985,#2F7A5F);transform:translateY(-1px);box-shadow:0 12px 28px rgba(200,150,62,.35)}
 .btn--ghost{border-color:rgba(233,242,237,.3);color:#E9F2ED}
 .btn--ghost:hover{border-color:var(--gold-light);color:var(--gold-light)}
-.hero__stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(233,242,237,.14);border:1px solid rgba(233,242,237,.14);border-radius:14px;overflow:hidden;max-width:720px;margin:56px auto 0}
+.hero__stats{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:rgba(233,242,237,.14);border:1px solid rgba(233,242,237,.14);border-radius:14px;overflow:hidden;max-width:440px;margin:56px auto 0}
 .hero__stat{background:rgba(10,31,26,.5);padding:22px 12px;backdrop-filter:blur(var(--fx-blur));-webkit-backdrop-filter:blur(var(--fx-blur));box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
 .hero__stat .num{font-family:var(--serif);font-size:34px;font-weight:700;color:#fff}
 .hero__stat .num span{color:var(--gold-light)}
@@ -206,14 +206,14 @@ a{color:var(--bio);text-decoration:none}
 <!-- ================= NAV ================= -->
 <nav class="nav">
   <div class="nav__inner">
-    <a class="nav__logo" href="#top"><span class="dot"></span>bio<span class="dev">·dev</span></a>
+    <a class="nav__logo" href="#top"><span class="dot"></span>ai<span class="dev">·skills</span></a>
     <div class="nav__links">
       <a href="#skills" data-i18n="nav_skills">技能索引</a>
       <a href="#quickstart" data-i18n="nav_quickstart">快速开始</a>
       <a href="#install" data-i18n="nav_install">安装</a>
     </div>
     <button class="nav__lang" id="langToggle" title="切换语言">EN</button>
-    <a class="nav__cta" href="https://github.com/sher-l/bio-dev" target="_blank" rel="noopener" data-i18n="nav_github">GitHub</a>
+    <a class="nav__cta" href="https://github.com/sher-l/ai-skills" target="_blank" rel="noopener" data-i18n="nav_github">GitHub</a>
   </div>
 </nav>
 
@@ -226,16 +226,15 @@ a{color:var(--bio);text-decoration:none}
     </div>
   <div class="hero__inner">
     <div class="hero__badge"><span class="pulse"></span><span data-i18n="hero_badge">🚧 建设中 · 技能陆续添加</span></div>
-    <h1 class="hero__title" data-i18n-html="hero_title">我的<span class="bio">生信</span> AI 技能库</h1>
-    <p class="hero__subtitle" data-i18n="hero_subtitle">bio-dev 存放我自己沉淀的生物信息学分析技能。每个技能都是一个自包含目录，可被 Codex / Claude Code / ZCode 等 AI Agent 直接加载调用。</p>
+    <h1 class="hero__title" data-i18n-html="hero_title">我的<span class="bio">AI 技能</span>库</h1>
+    <p class="hero__subtitle" data-i18n="hero_subtitle">ai-skills 存放我自己沉淀的 AI 技能。每个技能都是一个自包含目录，可被 Codex / Claude Code / ZCode 等 Agent 直接加载调用；板块会随技能沉淀逐步细分（生信分析会是其中之一）。</p>
     <div class="hero__actions">
       <a class="btn btn--primary" href="#install" data-i18n="hero_cta1">安装技能</a>
       <a class="btn btn--ghost" href="#skills" data-i18n="hero_cta2">浏览技能索引 ↓</a>
     </div>
     <div class="hero__stats">
       <div class="hero__stat"><div class="num" id="statSkills">0</div><div class="lbl" data-i18n="stat1_lbl">技能</div></div>
-      <div class="hero__stat"><div class="num" id="statCats">0</div><div class="lbl" data-i18n="stat2_lbl">分类领域</div></div>
-      <div class="hero__stat"><div class="num" id="statPlatforms">4<span>+</span></div><div class="lbl" data-i18n="stat3_lbl">Agent 平台</div></div>
+      <div class="hero__stat"><div class="num" id="statCats">0</div><div class="lbl" data-i18n="stat2_lbl">分类板块</div></div>
     </div>
   </div>
 </header>
@@ -264,7 +263,7 @@ a{color:var(--bio);text-decoration:none}
         <button class="quickstart__copy" id="copyPrompt" data-i18n="copy">复制</button>
       </div>
       <div class="quickstart__prompt" id="promptText"><span class="cm"># 把【技能名】换成 skills.js 里的技能 / replace with a skill name</span>
-请使用 bio-dev 技能库中的 <span class="gr">【技能名】</span> 技能，分析我提供的数据：
+请使用 ai-skills 技能库中的 <span class="gr">【技能名】</span> 技能，分析我提供的数据：
 
   1. 按该技能的 SKILL.md 契约执行完整工作流
   2. 固定随机种子，保存每一步中间结果
@@ -287,11 +286,11 @@ a{color:var(--bio);text-decoration:none}
 <!-- ================= FOOTER ================= -->
 <footer class="footer">
   <div class="footer__inner">
-    <div class="footer__brand">bio<span>·dev</span></div>
+    <div class="footer__brand">ai<span>·skills</span></div>
     <div class="footer__links">
-      <a href="https://github.com/sher-l/bio-dev" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/sher-l/ai-skills" target="_blank" rel="noopener">GitHub</a>
       <a href="https://sher-l.github.io/" target="_blank" rel="noopener" data-i18n="f_blog">博客</a>
-      <a href="https://github.com/sher-l/bio-dev/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+      <a href="https://github.com/sher-l/ai-skills/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
     </div>
     <div class="footer__meta">
       <span class="mono">© 2026 sher-l</span>
@@ -306,10 +305,10 @@ const I18N = {
   zh: {
     nav_skills:"技能索引", nav_quickstart:"快速开始", nav_install:"安装", nav_github:"GitHub",
     hero_badge:"🚧 建设中 · 技能陆续添加",
-    hero_title:'我的<span class="bio">生信</span> AI 技能库',
-    hero_subtitle:"bio-dev 存放我自己沉淀的生物信息学分析技能。每个技能都是一个自包含目录，可被 Codex / Claude Code / ZCode 等 AI Agent 直接加载调用。",
+    hero_title:'我的<span class="bio">AI 技能</span>库',
+    hero_subtitle:"ai-skills 存放我自己沉淀的 AI 技能。每个技能都是一个自包含目录，可被 Codex / Claude Code / ZCode 等 Agent 直接加载调用；板块会随技能沉淀逐步细分（生信分析会是其中之一）。",
     hero_cta1:"安装技能", hero_cta2:"浏览技能索引 ↓",
-    stat1_lbl:"技能", stat2_lbl:"分类领域", stat3_lbl:"Agent 平台",
+    stat1_lbl:"技能", stat2_lbl:"分类板块",
     skills_label:"01 · Skills Index", skills_title:"技能索引",
     skills_desc:'技能清单在 <span class="mono" style="font-size:13px">skills.js</span> 中维护，页面自动生成。',
     empty_h:"技能建设中", empty_p:'在仓库根目录的 <code>skills.js</code> 里添加条目，这里会自动生成技能卡片。',
@@ -322,10 +321,10 @@ const I18N = {
   en: {
     nav_skills:"Skills", nav_quickstart:"Quick Start", nav_install:"Install", nav_github:"GitHub",
     hero_badge:"🚧 Under construction · skills coming soon",
-    hero_title:'My <span class="bio">bioinformatics</span> AI skill library',
-    hero_subtitle:"bio-dev hosts the bioinformatics analysis skills I've built. Each skill is a self-contained directory that AI agents (Codex / Claude Code / ZCode) can load and invoke directly.",
+    hero_title:'My <span class="bio">AI Skills</span> Library',
+    hero_subtitle:"ai-skills hosts the AI skills I've built. Each skill is a self-contained directory that agents (Codex / Claude Code / ZCode) can load and invoke directly; categories — bioinformatics among them — will grow as skills land.",
     hero_cta1:"Install Skills", hero_cta2:"Browse Skills ↓",
-    stat1_lbl:"Skills", stat2_lbl:"Categories", stat3_lbl:"Agent Platforms",
+    stat1_lbl:"Skills", stat2_lbl:"Categories",
     skills_label:"01 · Skills Index", skills_title:"Skills Index",
     skills_desc:'The skill list lives in <span class="mono" style="font-size:13px">skills.js</span>; this page renders it automatically.',
     empty_h:"No skills yet", empty_p:'Add entries to <code>skills.js</code> in the repo root and the cards will appear here automatically.',
@@ -338,12 +337,12 @@ const I18N = {
 };
 
 /* ============ 技能数据（在 skills.js 中维护） ============ */
-const SKILLS = (window.BIO_DEV_SKILLS || []).map(s => ({
+const SKILLS = (window.AI_SKILLS || []).map(s => ({
   status: "stable", tags: [], repo: null, ...s
 }));
 
 /* ============ State & elements ============ */
-let lang = localStorage.getItem("bio-dev-lang") || "zh";
+let lang = localStorage.getItem("ai-skills-lang") || "zh";
 let activeCat = "all";
 const $ = s => document.querySelector(s);
 
@@ -362,7 +361,7 @@ function applyI18n(){
 }
 $("#langToggle").addEventListener("click", ()=>{
   lang = lang === "zh" ? "en" : "zh";
-  localStorage.setItem("bio-dev-lang", lang);
+  localStorage.setItem("ai-skills-lang", lang);
   applyI18n();
 });
 
@@ -420,18 +419,18 @@ const INSTALL = [
     guideZh:`<h4>Codex / ZCode</h4><ol><li>通过 skills 注册表一条命令全局安装</li><li>重启会话后 Agent 自动发现技能</li><li>提示词中点名技能名即可调用</li></ol>`,
     guideEn:`<h4>Codex / ZCode</h4><ol><li>Install globally via the skills registry</li><li>Restart the session; skills are discovered automatically</li><li>Reference the skill by name in your prompt</li></ol>`,
     term:`<span class="cm"># 全局安装 / global install</span>
-npx skills add <span class="hl">sher-l/bio-dev</span> -g` },
+npx skills add <span class="hl">sher-l/ai-skills</span> -g` },
   { id:"claude", zh:"Claude Code", en:"Claude Code",
     guideZh:`<h4>Claude Code</h4><ol><li>克隆到 <code>~/.claude/skills/</code> 用户技能目录</li><li>或在项目内使用 <code>.claude/skills/</code> 仅当前项目生效</li><li>提示词中点名技能名即可调用</li></ol>`,
     guideEn:`<h4>Claude Code</h4><ol><li>Clone into <code>~/.claude/skills/</code> for a user-level install</li><li>Or use <code>.claude/skills/</code> inside a repo for project scope</li><li>Reference the skill by name in your prompt</li></ol>`,
     term:`<span class="cm"># 用户级安装 / user-level install</span>
-git clone https://github.com/<span class="hl">sher-l/bio-dev</span> \\
-  ~/.claude/skills/bio-dev` },
+git clone https://github.com/<span class="hl">sher-l/ai-skills</span> \\
+  ~/.claude/skills/ai-skills` },
   { id:"generic", zh:"其他 Agent / ZIP", en:"Others / ZIP",
     guideZh:`<h4>其他 Agent / 手动下载</h4><ol><li>下载仓库 ZIP 或克隆后，把 <code>skills/</code> 下的目录放入所用 Agent 的技能扫描路径</li><li>每个技能目录都含标准 <code>SKILL.md</code></li></ol>`,
     guideEn:`<h4>Other agents / manual</h4><ol><li>Download or clone the repo, then copy the <code>skills/</code> directories into your agent's skill scan path</li><li>Every skill directory ships a standard <code>SKILL.md</code></li></ol>`,
     term:`<span class="cm"># 通用安装 / generic install</span>
-git clone https://github.com/<span class="hl">sher-l/bio-dev</span>.git
+git clone https://github.com/<span class="hl">sher-l/ai-skills</span>.git
 <span class="gr"># 把 skills/ 下的目录复制到 Agent 技能路径</span>` }
 ];
 let activeTab = "codex";
