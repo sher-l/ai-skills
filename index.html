@@ -507,13 +507,21 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
         linked:false
       };
     });
-    motes = Array.from({length:DUST_N},()=>({
-      x:Math.random()*W, y:Math.random()*H,
-      phase:Math.random()*Math.PI*2,
-      sp:DUST_SPEED*(0.7+Math.random()*0.6),
-      r:DUST_SIZE*(0.75+Math.random()*0.5),
-      deep:Math.random()<.35
-    }));
+    motes = Array.from({length:DUST_N},()=>{
+      const ang = Math.random()*Math.PI*2;
+      const sp = DUST_SPEED*(0.25+Math.random()*0.5);            /* 慢速漂浮 */
+      return {
+        x:Math.random()*W, y:Math.random()*H,
+        vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp,                /* 初速：随机方向 */
+        sp,
+        tang:Math.random()*Math.PI*2,                             /* 目标方向：定期重选 */
+        reT:180+Math.random()*300,
+        r:DUST_SIZE*(0.5+Math.pow(Math.random(),1.6)),           /* 偏小分布：小点多、大点少 */
+        deep:Math.random()<.35,
+        phase:Math.random()*Math.PI*2,                            /* 呼吸相位 */
+        freq:0.8+Math.random()*1.2                                /* 呼吸频率 */
+      };
+    });
   }
   function step(){
     t += 1/60;
@@ -549,44 +557,49 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
       }
     }
 
-    /* 粉尘：上升 + 与节点互动 */
+    /* 粉尘：随机方向漫游 + 呼吸明暗 + 与节点互动 */
     for(const m of motes){
-      m.y -= m.sp;
-      const px = m.x + Math.sin(t*1.4 + m.phase)*8;   /* 轻微左右摆动 */
-      if(m.y < -12){ m.y = H + 8; m.x = Math.random()*W; }
-      const fade = Math.max(0, Math.min(1, (H - m.y)/(H*0.12), m.y/(H*0.25)));
+      m.reT -= 1;
+      if(m.reT <= 0){ m.tang = Math.random()*Math.PI*2; m.reT = 180 + Math.random()*300; }
+      m.vx += (Math.cos(m.tang)*m.sp - m.vx)*.01;
+      m.vy += (Math.sin(m.tang)*m.sp - m.vy)*.01;
+      m.x += m.vx; m.y += m.vy;
+      if(m.x < -12) m.x = W+12; else if(m.x > W+12) m.x = -12;   /* 越界穿回，密度恒定 */
+      if(m.y < -12) m.y = H+12; else if(m.y > H+12) m.y = -12;
+      const breath = 0.18 + 0.82*(0.5 + 0.5*Math.sin(t*m.freq*2 + m.phase));
+      const rb = m.r*(0.88 + 0.12*Math.sin(t*m.freq*2 + m.phase));
 
       for(const n of nodes){
-        const dx=n.x-px, dy=n.y-m.y, dist=Math.hypot(dx,dy)||1;
+        const dx=n.x-m.x, dy=n.y-m.y, dist=Math.hypot(dx,dy)||1;
         if(dist < DUST_LINK){
           /* 连上去：粉尘到节点的金色细线 */
-          const o=(1-dist/DUST_LINK)*.5*fade;
+          const o=(1-dist/DUST_LINK)*.5*breath;
           if(o>0.02){
             ctx.strokeStyle=`rgba(232,201,122,${o})`;
             ctx.lineWidth=1;
-            ctx.beginPath(); ctx.moveTo(px,m.y); ctx.lineTo(n.x,n.y); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(m.x,m.y); ctx.lineTo(n.x,n.y); ctx.stroke();
           }
           /* 拖拽：节点被粉尘拉动（限幅 30px，超出后弹簧接管） */
           const off = Math.hypot(n.x-n.hx, n.y-n.hy);
           if(off < 30){
-            n.vx += (px-n.x)/dist*0.02;
+            n.vx += (m.x-n.x)/dist*0.02;
             n.vy += (m.y-n.y)/dist*0.04;
           }
           n.linked = true;
         } else if(n.linked){
-          /* 挣脱：断开瞬间向上弹开一个冲量，随后被弹簧拉回锚点回弹 */
-          n.vy -= 0.28;
-          n.vx += (Math.random()-.5)*0.25;
+          /* 挣脱：沿远离粉尘的方向弹开，随后弹簧拉回锚点 */
+          n.vx += (n.x-m.x)/dist*0.3;
+          n.vy += (n.y-m.y)/dist*0.3;
           n.linked = false;
         }
       }
 
-      /* 粉尘本体：绿系光点 + 光晕 */
+      /* 粉尘本体：绿系光点 + 呼吸明暗与微缩放 */
       const core = m.deep ? "60,147,115" : "111,199,164";
-      ctx.fillStyle=`rgba(${core},${0.22*fade})`;
-      ctx.beginPath(); ctx.arc(px,m.y,m.r*2.4,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle=`rgba(${core},${0.85*fade})`;
-      ctx.beginPath(); ctx.arc(px,m.y,m.r,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=`rgba(${core},${0.22*breath})`;
+      ctx.beginPath(); ctx.arc(m.x,m.y,rb*2.4,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=`rgba(${core},${0.85*breath})`;
+      ctx.beginPath(); ctx.arc(m.x,m.y,rb,0,Math.PI*2); ctx.fill();
     }
 
     /* 网络节点 */
