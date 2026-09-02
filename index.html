@@ -494,13 +494,17 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
 
   function resize(){ W = canvas.width = canvas.offsetWidth; H = canvas.height = canvas.offsetHeight; }
   function init(){
-    nodes = Array.from({length:NODE_N},()=>({
-      x:Math.random()*W, y:Math.random()*H,
-      vx:(Math.random()-.5)*.4, vy:(Math.random()-.5)*.4,
-      r:Math.random()*1.7+.9,
-      gold:Math.random()<.12,
-      linked:false
-    }));
+    nodes = Array.from({length:NODE_N},()=>{
+      const x = Math.random()*W, y = Math.random()*H;
+      return {
+        x, y, vx:0, vy:0,                          /* 实际位置：弹簧追随锚点，被扰动后弹回 */
+        hx:x, hy:y,                                /* 锚点：自身缓慢漂移，承载基础网络运动 */
+        hvx:(Math.random()-.5)*.4, hvy:(Math.random()-.5)*.4,
+        r:Math.random()*1.7+.9,
+        gold:Math.random()<.12,
+        linked:false
+      };
+    });
     motes = Array.from({length:DUST_N},()=>({
       x:Math.random()*W, y:Math.random()*H,
       phase:Math.random()*Math.PI*2,
@@ -513,13 +517,15 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
     t += 1/60;
     ctx.clearRect(0,0,W,H);
 
-    /* 网络漂移（限速，防止被扰动力加速失控） */
+    /* 锚点缓慢漂移（基础网络运动）；节点经弹簧追随锚点，被扰动后自动弹回 */
     for(const p of nodes){
-      const s = Math.hypot(p.vx, p.vy);
-      if(s > 1.3){ p.vx *= 1.3/s; p.vy *= 1.3/s; }
+      p.hx += p.hvx; p.hy += p.hvy;
+      if(p.hx<0||p.hx>W) p.hvx *= -1;
+      if(p.hy<0||p.hy>H) p.hvy *= -1;
+      p.vx += (p.hx - p.x)*0.01;
+      p.vy += (p.hy - p.y)*0.01;
+      p.vx *= 0.9; p.vy *= 0.9;
       p.x += p.vx; p.y += p.vy;
-      if(p.x<0||p.x>W) p.vx *= -1;
-      if(p.y<0||p.y>H) p.vy *= -1;
     }
 
     /* 网络：绿系节点间连线 */
@@ -550,13 +556,17 @@ document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
             ctx.lineWidth=1;
             ctx.beginPath(); ctx.moveTo(px,m.y); ctx.lineTo(n.x,n.y); ctx.stroke();
           }
-          /* 拖拽：节点被粉尘轻微上拉 */
-          n.vx += (px-n.x)/dist*0.004;
-          n.vy += (m.y-n.y)/dist*0.012;
+          /* 拖拽：节点被粉尘拉动（限幅 24px，超出后弹簧接管） */
+          const off = Math.hypot(n.x-n.hx, n.y-n.hy);
+          if(off < 24){
+            n.vx += (px-n.x)/dist*0.015;
+            n.vy += (m.y-n.y)/dist*0.03;
+          }
           n.linked = true;
         } else if(n.linked){
-          /* 挣脱：断开瞬间节点向上弹开 */
-          n.vy -= 0.12;
+          /* 挣脱：断开瞬间向上弹开一个冲量，随后被弹簧拉回锚点回弹 */
+          n.vy -= 0.28;
+          n.vx += (Math.random()-.5)*0.25;
           n.linked = false;
         }
       }
