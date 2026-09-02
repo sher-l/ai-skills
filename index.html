@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>bio-dev · 生信数据分析技能库</title>
-<meta name="description" content="bio-dev —— 从 60+ 真实交付报告与 900+ R 脚本中提炼的生物信息学 AI 技能库，覆盖转录组、单细胞、GBD、孟德尔随机化、网络药理学与机器学习。">
-<meta property="og:title" content="bio-dev · 生信数据分析技能库">
-<meta property="og:description" content="让 AI 成为你的生信分析伙伴 —— 真实项目提炼、可复现工作流、机器可读设计。">
+<title>bio-dev · 生信技能库</title>
+<meta name="description" content="bio-dev —— sher-l 的生物信息学 AI 技能库：转录组、单细胞、GBD、孟德尔随机化等分析技能，供 Codex / Claude Code 等 Agent 直接调用。">
+<meta property="og:title" content="bio-dev · 生信技能库">
+<meta property="og:description" content="sher-l 的生物信息学 AI 技能库。">
 <meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230A1F1A'/%3E%3Cpath d='M10 8c0 6 12 10 12 16M22 8c0 6-12 10-12 16' stroke='%233C9373' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3Cpath d='M12 11h8M12 16h8M12 21h8' stroke='%23C8963E' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -44,8 +44,6 @@ html{scroll-behavior:smooth}
 body{background:var(--paper);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.7;-webkit-font-smoothing:antialiased}
 section{scroll-margin-top:76px}
 a{color:var(--bio);text-decoration:none}
-img{max-width:100%}
-.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
 .mono{font-family:var(--mono)}
 .reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
 .reveal.in{opacity:1;transform:none}
@@ -77,22 +75,20 @@ img{max-width:100%}
 .hero__badge .pulse{width:7px;height:7px;border-radius:50%;background:var(--gold-light);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 .hero__title{font-family:var(--serif);font-size:clamp(34px,5.4vw,58px);font-weight:700;line-height:1.25;letter-spacing:.5px}
-.hero__title em{font-style:normal;color:var(--gold-light)}
 .hero__title .bio{color:#6FC7A4}
 .hero__subtitle{max-width:640px;margin:22px auto 0;font-size:16.5px;color:#AECBBE;line-height:1.85}
-.hero__subtitle b{color:#E9F2ED;font-weight:600}
 .hero__actions{display:flex;gap:14px;justify-content:center;margin-top:36px;flex-wrap:wrap}
 .btn{display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:600;border-radius:10px;padding:12px 26px;transition:all .2s;cursor:pointer;border:1px solid transparent}
 .btn--primary{background:var(--bio-strong);color:#fff}
 .btn--primary:hover{background:#4AA985;transform:translateY(-1px)}
 .btn--ghost{border-color:rgba(233,242,237,.3);color:#E9F2ED}
 .btn--ghost:hover{border-color:var(--gold-light);color:var(--gold-light)}
-.hero__stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(233,242,237,.14);border:1px solid rgba(233,242,237,.14);border-radius:14px;overflow:hidden;max-width:820px;margin:56px auto 0}
+.hero__stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(233,242,237,.14);border:1px solid rgba(233,242,237,.14);border-radius:14px;overflow:hidden;max-width:720px;margin:56px auto 0}
 .hero__stat{background:rgba(10,31,26,.55);padding:22px 12px;backdrop-filter:blur(4px)}
 .hero__stat .num{font-family:var(--serif);font-size:34px;font-weight:700;color:#fff}
 .hero__stat .num span{color:var(--gold-light)}
 .hero__stat .lbl{font-size:13px;color:#9DB8AC;margin-top:2px}
-@media (max-width:640px){.hero__stats{grid-template-columns:repeat(2,1fr)}.hero{padding:120px 0 70px}}
+@media (max-width:640px){.hero__stats{grid-template-columns:1fr}.hero{padding:120px 0 70px}}
 
 /* ---------- Section headers ---------- */
 .sec{padding:84px 0}
@@ -101,16 +97,6 @@ img{max-width:100%}
 .sec__label::before,.sec__label::after{content:"";width:34px;height:1px;background:var(--gold);opacity:.5}
 .sec__title{font-family:var(--serif);font-size:clamp(26px,3.4vw,38px);font-weight:700;color:var(--ink);text-align:center;margin-top:12px}
 .sec__desc{text-align:center;color:var(--text-2);max-width:620px;margin:14px auto 0;font-size:15.5px}
-
-/* ---------- Philosophy ---------- */
-.philosophy__grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:48px}
-.philosophy__card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:30px 26px;box-shadow:var(--shadow);transition:transform .25s,box-shadow .25s}
-.philosophy__card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lift)}
-.philosophy__card .icon{width:46px;height:46px;border-radius:12px;background:var(--bio-pale);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:18px}
-.philosophy__card h3{font-family:var(--serif);font-size:21px;color:var(--ink);margin-bottom:10px}
-.philosophy__card p{font-size:14.5px;color:var(--text-2)}
-.philosophy__card p b{color:var(--bio);font-weight:600}
-@media (max-width:860px){.philosophy__grid{grid-template-columns:1fr}}
 
 /* ---------- Skills ---------- */
 .skills__cats{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:40px}
@@ -131,6 +117,12 @@ img{max-width:100%}
 .skill-card p{font-size:13.8px;color:var(--text-2);flex:1}
 .skill-card__tags{display:flex;flex-wrap:wrap;gap:6px}
 .skill-card__tags span{font-family:var(--mono);font-size:11px;color:var(--text-3);background:var(--paper-2);border:1px solid var(--border-soft);border-radius:5px;padding:2px 8px}
+.skill-card__link{font-family:var(--mono);font-size:12.5px;color:var(--bio);margin-top:2px}
+.skill-card__link:hover{text-decoration:underline}
+.skills__empty{grid-column:1/-1;background:var(--card);border:1px dashed var(--border);border-radius:14px;padding:48px 24px;text-align:center;color:var(--text-3)}
+.skills__empty .icon{font-size:30px;margin-bottom:12px}
+.skills__empty h3{font-family:var(--serif);font-size:20px;color:var(--text-2);margin-bottom:8px}
+.skills__empty code{font-family:var(--mono);font-size:12.5px;background:var(--paper-2);border:1px solid var(--border-soft);border-radius:6px;padding:2px 8px;color:var(--bio)}
 @media (max-width:960px){.skills__grid{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:620px){.skills__grid{grid-template-columns:1fr}}
 
@@ -148,7 +140,6 @@ img{max-width:100%}
 .quickstart__prompt .cm{color:var(--term-comment)}
 .quickstart__prompt .hl{color:var(--gold-light)}
 .quickstart__prompt .gr{color:#6FC7A4}
-.quickstart__note{text-align:center;font-size:13.5px;color:var(--text-3);margin-top:16px}
 
 /* ---------- Install ---------- */
 .install__tabs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:40px}
@@ -167,40 +158,7 @@ img{max-width:100%}
 .install-panel__term .hl{color:var(--gold-light)}
 .install-panel__term .gr{color:#6FC7A4}
 
-/* ---------- Principles ---------- */
-.principles__list{max-width:760px;margin:44px auto 0;display:grid;gap:0}
-.principle-item{display:flex;gap:20px;padding:20px 6px;border-bottom:1px solid var(--border-soft);align-items:baseline}
-.principle-item:last-child{border-bottom:none}
-.principle-item .no{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--gold);min-width:44px}
-.principle-item h3{font-size:16.5px;font-weight:600;color:var(--ink);margin-bottom:4px}
-.principle-item p{font-size:14px;color:var(--text-2)}
-
-/* ---------- Roadmap ---------- */
-.roadmap{max-width:860px;margin:46px auto 0;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.roadmap__step{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;box-shadow:var(--shadow)}
-.roadmap__step .ver{font-family:var(--mono);font-size:12px;color:var(--gold);font-weight:600}
-.roadmap__step h4{font-size:15px;color:var(--ink);margin:8px 0 6px}
-.roadmap__step p{font-size:12.8px;color:var(--text-2)}
-.roadmap__step.done{border-color:var(--bio);background:linear-gradient(180deg,var(--bio-pale),var(--card) 70%)}
-.roadmap__step .state{position:absolute;top:16px;right:16px;font-size:14px}
-@media (max-width:860px){.roadmap{grid-template-columns:repeat(2,1fr)}}
-@media (max-width:520px){.roadmap{grid-template-columns:1fr}}
-
-/* ---------- Quote ---------- */
-.quote{background:linear-gradient(150deg,var(--ink) 0%,var(--ink-3));color:#E9F2ED;padding:80px 0;text-align:center}
-.quote blockquote{font-family:var(--serif);font-size:clamp(20px,2.8vw,28px);font-weight:600;line-height:1.7;max-width:720px;margin:0 auto}
-.quote blockquote em{font-style:normal;color:var(--gold-light)}
-.quote__attr{margin-top:20px;font-family:var(--mono);font-size:13px;color:#9DB8AC}
-
-/* ---------- CTA + Footer ---------- */
-.cta{padding:88px 0;text-align:center}
-.cta h2{font-family:var(--serif);font-size:clamp(26px,3.6vw,40px);color:var(--ink);font-weight:700}
-.cta p{color:var(--text-2);margin:14px auto 34px;max-width:540px}
-.cta__actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
-.cta .btn--primary{background:var(--ink)}
-.cta .btn--primary:hover{background:var(--bio-strong)}
-.cta .btn--ghost{border-color:var(--border);color:var(--text-2)}
-.cta .btn--ghost:hover{border-color:var(--bio);color:var(--bio)}
+/* ---------- Footer ---------- */
 .footer{border-top:1px solid var(--border);padding:36px 0;background:var(--paper-2)}
 .footer__inner{max-width:1120px;margin:0 auto;padding:0 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
 .footer__brand{font-family:var(--serif);font-size:17px;font-weight:700;color:var(--ink)}
@@ -222,8 +180,6 @@ img{max-width:100%}
       <a href="#skills" data-i18n="nav_skills">技能索引</a>
       <a href="#quickstart" data-i18n="nav_quickstart">快速开始</a>
       <a href="#install" data-i18n="nav_install">安装</a>
-      <a href="#philosophy" data-i18n="nav_philosophy">理念</a>
-      <a href="#roadmap" data-i18n="nav_roadmap">路线图</a>
     </div>
     <button class="nav__lang" id="langToggle" title="切换语言">EN</button>
     <a class="nav__cta" href="https://github.com/sher-l/bio-dev" target="_blank" rel="noopener" data-i18n="nav_github">GitHub</a>
@@ -234,54 +190,27 @@ img{max-width:100%}
 <header class="hero" id="top">
   <canvas class="hero__canvas" id="heroCanvas"></canvas>
   <div class="hero__inner">
-    <div class="hero__badge"><span class="pulse"></span><span data-i18n="hero_badge">v0.1 · 从真实交付项目中持续构建</span></div>
-    <h1 class="hero__title" data-i18n-html="hero_title">让 <span class="bio">AI</span> 成为你的<em>生信分析</em>伙伴</h1>
-    <p class="hero__subtitle" data-i18n-html="hero_subtitle">bio-dev 是一套面向 AI Agent 的生物信息学技能库，从 <b>60+ 份真实交付报告</b>与 <b>900+ 个 R 分析脚本</b>中提炼而成，覆盖转录组、单细胞、GBD、孟德尔随机化等主流分析场景。</p>
+    <div class="hero__badge"><span class="pulse"></span><span data-i18n="hero_badge">🚧 建设中 · 技能陆续添加</span></div>
+    <h1 class="hero__title" data-i18n-html="hero_title">我的<span class="bio">生信</span> AI 技能库</h1>
+    <p class="hero__subtitle" data-i18n="hero_subtitle">bio-dev 存放我自己沉淀的生物信息学分析技能。每个技能都是一个自包含目录，可被 Codex / Claude Code / ZCode 等 AI Agent 直接加载调用。</p>
     <div class="hero__actions">
       <a class="btn btn--primary" href="#install" data-i18n="hero_cta1">安装技能</a>
       <a class="btn btn--ghost" href="#skills" data-i18n="hero_cta2">浏览技能索引 ↓</a>
     </div>
     <div class="hero__stats">
-      <div class="hero__stat"><div class="num" data-i18n="stat1_num">10</div><div class="lbl" data-i18n="stat1_lbl">核心技能</div></div>
-      <div class="hero__stat"><div class="num">60<span>+</span></div><div class="lbl" data-i18n="stat2_lbl">真实交付报告</div></div>
-      <div class="hero__stat"><div class="num">900<span>+</span></div><div class="lbl" data-i18n="stat3_lbl">R 分析脚本</div></div>
-      <div class="hero__stat"><div class="num">8</div><div class="lbl" data-i18n="stat4_lbl">分析领域</div></div>
+      <div class="hero__stat"><div class="num" id="statSkills">0</div><div class="lbl" data-i18n="stat1_lbl">技能</div></div>
+      <div class="hero__stat"><div class="num" id="statCats">0</div><div class="lbl" data-i18n="stat2_lbl">分类领域</div></div>
+      <div class="hero__stat"><div class="num" id="statPlatforms">4<span>+</span></div><div class="lbl" data-i18n="stat3_lbl">Agent 平台</div></div>
     </div>
   </div>
 </header>
 
-<!-- ================= PHILOSOPHY ================= -->
-<section class="sec sec--tint" id="philosophy">
-  <div class="wrap">
-    <div class="sec__label" data-i18n="phil_label">01 · Philosophy</div>
-    <h2 class="sec__title" data-i18n="phil_title">设计哲学</h2>
-    <p class="sec__desc" data-i18n="phil_desc">技能不是教程的搬运，而是把真实项目里反复验证过的工作流，压缩成 Agent 可以直接执行的契约。</p>
-    <div class="philosophy__grid">
-      <div class="philosophy__card reveal">
-        <div class="icon">🧬</div>
-        <h3 data-i18n="phil1_h">从真实项目提炼</h3>
-        <p data-i18n="phil1_p">每一项技能都对应数十份<b>真实交付</b>的数据分析报告与配套 R 代码，而非教科书式的伪流程。项目里踩过的坑，直接写进技能的约束条款。</p>
-      </div>
-      <div class="philosophy__card reveal">
-        <div class="icon">♻️</div>
-        <h3 data-i18n="phil2_h">可复现优先</h3>
-        <p data-i18n="phil2_p">固定的目录结构、随机种子、版本化的依赖与<b>逐脚本中间输出</b>——任何人拿到输出目录，都能还原从原始数据到报告图表的每一步。</p>
-      </div>
-      <div class="philosophy__card reveal">
-        <div class="icon">🤖</div>
-        <h3 data-i18n="phil3_h">机器可读设计</h3>
-        <p data-i18n="phil3_p">以 SKILL.md 契约为载体：输入输出显式声明、失败模式提前列出、检查清单逐条可验证，让 Agent <b>一次读懂</b>、按步执行、不自由发挥。</p>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ================= SKILLS ================= -->
 <section class="sec" id="skills">
   <div class="wrap">
-    <div class="sec__label" data-i18n="skills_label">02 · Skills Index</div>
+    <div class="sec__label" data-i18n="skills_label">01 · Skills Index</div>
     <h2 class="sec__title" data-i18n="skills_title">技能索引</h2>
-    <p class="sec__desc" data-i18n="skills_desc">每个技能都是一个自包含目录：契约 + 参考实现 + 报告模板。点击分类筛选。</p>
+    <p class="sec__desc" data-i18n="skills_desc">技能清单在 <span class="mono" style="font-size:13px">skills.js</span> 中维护，页面自动生成。</p>
     <div class="skills__cats" id="skillCats"></div>
     <div class="skills__grid" id="skillGrid"></div>
   </div>
@@ -290,88 +219,33 @@ img{max-width:100%}
 <!-- ================= QUICKSTART ================= -->
 <section class="sec sec--tint" id="quickstart">
   <div class="wrap">
-    <div class="sec__label" data-i18n="qs_label">03 · Quick Start</div>
+    <div class="sec__label" data-i18n="qs_label">02 · Quick Start</div>
     <h2 class="sec__title" data-i18n="qs_title">快速开始</h2>
-    <p class="sec__desc" data-i18n="qs_desc">安装技能后，把下面的提示词直接交给你的 AI Agent。</p>
+    <p class="sec__desc" data-i18n="qs_desc">安装技能后，把提示词直接交给你的 AI Agent。</p>
     <div class="quickstart__box reveal">
       <div class="quickstart__bar">
         <span class="led"></span><span class="led"></span><span class="led"></span>
         <span class="title">prompt.txt</span>
         <button class="quickstart__copy" id="copyPrompt" data-i18n="copy">复制</button>
       </div>
-      <div class="quickstart__prompt" id="promptText"><span class="cm"># 转录组 + 单细胞联合分析（示例）</span>
-我要研究 <span class="hl">XX 疾病</span>中与 <span class="hl">YY 通路</span>相关的预后基因。
-请使用 bio-dev 技能库中的 <span class="gr">bulk-rna-seq</span>、<span class="gr">sc-rna-seq</span> 与 <span class="gr">ml-biomarker</span> 技能：
+      <div class="quickstart__prompt" id="promptText"><span class="cm"># 把【技能名】换成 skills.js 里的技能 / replace with a skill name</span>
+请使用 bio-dev 技能库中的 <span class="gr">【技能名】</span> 技能，分析我提供的数据：
 
-  1. 转录组数据质控与差异表达分析（DESeq2）
-  2. 单细胞降维聚类与细胞类型注释（Seurat）
-  3. 目标通路基因集在细胞亚群中的评分与定位
-  4. LASSO + 随机森林筛选预后标志物并构建列线图
-  5. 按 <span class="gr">report-writer</span> 技能输出可交付的数据分析报告
-
-要求全程可复现：固定种子、保存中间结果、报告图表与代码一一对应。</div>
+  1. 按该技能的 SKILL.md 契约执行完整工作流
+  2. 固定随机种子，保存每一步中间结果
+  3. 输出可复现的<span class="hl">目录结构与产物清单</span></div>
     </div>
-    <p class="quickstart__note" data-i18n="qs_note">提示词可按项目自由组合技能，Agent 会自动加载对应技能的完整契约。</p>
   </div>
 </section>
 
 <!-- ================= INSTALL ================= -->
 <section class="sec" id="install">
   <div class="wrap">
-    <div class="sec__label" data-i18n="inst_label">04 · Installation</div>
+    <div class="sec__label" data-i18n="inst_label">03 · Installation</div>
     <h2 class="sec__title" data-i18n="inst_title">安装指南</h2>
     <p class="sec__desc" data-i18n="inst_desc">支持主流 Agent 平台，一条命令完成全局安装。</p>
     <div class="install__tabs" id="installTabs" role="tablist"></div>
     <div id="installPanels"></div>
-  </div>
-</section>
-
-<!-- ================= PRINCIPLES ================= -->
-<section class="sec sec--tint" id="principles">
-  <div class="wrap">
-    <div class="sec__label" data-i18n="prin_label">05 · Principles</div>
-    <h2 class="sec__title" data-i18n="prin_title">五条契约</h2>
-    <div class="principles__list">
-      <div class="principle-item reveal"><div class="no">01</div><div><h3 data-i18n="prin1_h">一手数据优先</h3><p data-i18n="prin1_p">结论必须来自本次运行的输出文件，禁止引用记忆中的"常识结果"。</p></div></div>
-      <div class="principle-item reveal"><div class="no">02</div><div><h3 data-i18n="prin2_h">显式优于隐式</h3><p data-i18n="prin2_p">参数、阈值、版本写进命令行与配置，不在报告里"默认处理"。</p></div></div>
-      <div class="principle-item reveal"><div class="no">03</div><div><h3 data-i18n="prin3_h">上下文感知</h3><p data-i18n="prin3_p">技能声明适用数据类型与样本量范围，超范围时主动降级并说明。</p></div></div>
-      <div class="principle-item reveal"><div class="no">04</div><div><h3 data-i18n="prin4_h">输出先行</h3><p data-i18n="prin4_p">先约定目录结构与产物清单，再开始写第一行分析代码。</p></div></div>
-      <div class="principle-item reveal"><div class="no">05</div><div><h3 data-i18n="prin5_h">报告即契约</h3><p data-i18n="prin5_p">交付报告的每一张图、每一个数字，都能定位到生成它的那段代码。</p></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- ================= ROADMAP ================= -->
-<section class="sec" id="roadmap">
-  <div class="wrap">
-    <div class="sec__label" data-i18n="road_label">06 · Roadmap</div>
-    <h2 class="sec__title" data-i18n="road_title">建设路线</h2>
-    <div class="roadmap">
-      <div class="roadmap__step done reveal"><span class="state">✅</span><div class="ver">v0.1</div><h4 data-i18n="road1_h">技能框架</h4><p data-i18n="road1_p">技能库骨架、契约规范、报告与代码语料整理。</p></div>
-      <div class="roadmap__step reveal"><span class="state">🚧</span><div class="ver">v0.2</div><h4 data-i18n="road2_h">转录组 + 单细胞</h4><p data-i18n="road2_p">bulk-rna-seq / sc-rna-seq / ml-biomarker 完整参考实现。</p></div>
-      <div class="roadmap__step reveal"><span class="state">⏳</span><div class="ver">v0.3</div><h4 data-i18n="road3_h">流行病分析域</h4><p data-i18n="road3_p">gbd-analysis 与 mendelian-randomization 技能落地。</p></div>
-      <div class="roadmap__step reveal"><span class="state">⏳</span><div class="ver">v1.0</div><h4 data-i18n="road4_h">全域覆盖</h4><p data-i18n="road4_p">全部技能稳定版，配套端到端示例项目与英文文档。</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- ================= QUOTE ================= -->
-<section class="quote">
-  <div class="wrap">
-    <blockquote data-i18n-html="quote_text">"分析的终点不是图表，而是一份<em>别人愿意相信</em>的报告。"</blockquote>
-    <div class="quote__attr" data-i18n="quote_attr">— 写在整理第 60 份交付报告之后</div>
-  </div>
-</section>
-
-<!-- ================= CTA ================= -->
-<section class="cta">
-  <div class="wrap">
-    <h2 data-i18n="cta_title">把重复的分析，交给 Agent。</h2>
-    <p data-i18n="cta_desc">安装 bio-dev，让你的 AI 工具按真实项目的标准跑完从原始数据到交付报告的全流程。</p>
-    <div class="cta__actions">
-      <a class="btn btn--primary" href="https://github.com/sher-l/bio-dev" target="_blank" rel="noopener" data-i18n="cta_btn1">前往 GitHub</a>
-      <a class="btn btn--ghost" href="https://sher-l.github.io/" target="_blank" rel="noopener" data-i18n="cta_btn2">访问作者博客 →</a>
-    </div>
   </div>
 </section>
 
@@ -385,140 +259,54 @@ img{max-width:100%}
       <a href="https://github.com/sher-l/bio-dev/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
     </div>
     <div class="footer__meta">
-      <span data-i18n="f_meta">单文件静态页面 · 无依赖 · 灵感来自</span> <a href="https://yuan1z0825.github.io/nature-skills/" target="_blank" rel="noopener">nature-skills</a> · <a href="https://tt-a1i.github.io/archify/" target="_blank" rel="noopener">archify</a><br>
-      <span class="mono">© 2026 sher-l · built as one index.html</span>
+      <span data-i18n="f_meta">单文件静态页面 · 无构建依赖 · 页面设计参考</span> <a href="https://yuan1z0825.github.io/nature-skills/" target="_blank" rel="noopener">nature-skills</a> · <a href="https://tt-a1i.github.io/archify/" target="_blank" rel="noopener">archify</a><br>
+      <span class="mono">© 2026 sher-l</span>
     </div>
   </div>
 </footer>
 
+<script src="skills.js"></script>
 <script>
-/* ============ i18n ============ */
+/* ============ i18n（页面框架文案） ============ */
 const I18N = {
   zh: {
-    nav_skills:"技能索引", nav_quickstart:"快速开始", nav_install:"安装", nav_philosophy:"理念", nav_roadmap:"路线图", nav_github:"GitHub",
-    hero_badge:"v0.1 · 从真实交付项目中持续构建",
-    hero_title:'让 <span class="bio">AI</span> 成为你的<em>生信分析</em>伙伴',
-    hero_subtitle:'bio-dev 是一套面向 AI Agent 的生物信息学技能库，从 <b>60+ 份真实交付报告</b>与 <b>900+ 个 R 分析脚本</b>中提炼而成，覆盖转录组、单细胞、GBD、孟德尔随机化等主流分析场景。',
+    nav_skills:"技能索引", nav_quickstart:"快速开始", nav_install:"安装", nav_github:"GitHub",
+    hero_badge:"🚧 建设中 · 技能陆续添加",
+    hero_title:'我的<span class="bio">生信</span> AI 技能库',
+    hero_subtitle:"bio-dev 存放我自己沉淀的生物信息学分析技能。每个技能都是一个自包含目录，可被 Codex / Claude Code / ZCode 等 AI Agent 直接加载调用。",
     hero_cta1:"安装技能", hero_cta2:"浏览技能索引 ↓",
-    stat1_num:"10", stat1_lbl:"核心技能", stat2_lbl:"真实交付报告", stat3_lbl:"R 分析脚本", stat4_lbl:"分析领域",
-    phil_label:"01 · Philosophy", phil_title:"设计哲学",
-    phil_desc:"技能不是教程的搬运，而是把真实项目里反复验证过的工作流，压缩成 Agent 可以直接执行的契约。",
-    phil1_h:"从真实项目提炼", phil1_p:'每一项技能都对应数十份<b>真实交付</b>的数据分析报告与配套 R 代码，而非教科书式的伪流程。项目里踩过的坑，直接写进技能的约束条款。',
-    phil2_h:"可复现优先", phil2_p:'固定的目录结构、随机种子、版本化的依赖与<b>逐脚本中间输出</b>——任何人拿到输出目录，都能还原从原始数据到报告图表的每一步。',
-    phil3_h:"机器可读设计", phil3_p:'以 SKILL.md 契约为载体：输入输出显式声明、失败模式提前列出、检查清单逐条可验证，让 Agent <b>一次读懂</b>、按步执行、不自由发挥。',
-    skills_label:"02 · Skills Index", skills_title:"技能索引",
-    skills_desc:"每个技能都是一个自包含目录：契约 + 参考实现 + 报告模板。点击分类筛选。",
-    qs_label:"03 · Quick Start", qs_title:"快速开始", qs_desc:"安装技能后，把下面的提示词直接交给你的 AI Agent。",
-    copy:"复制", copied:"已复制 ✓", qs_note:"提示词可按项目自由组合技能，Agent 会自动加载对应技能的完整契约。",
-    inst_label:"04 · Installation", inst_title:"安装指南", inst_desc:"支持主流 Agent 平台，一条命令完成全局安装。",
-    prin_label:"05 · Principles", prin_title:"五条契约",
-    prin1_h:"一手数据优先", prin1_p:'结论必须来自本次运行的输出文件，禁止引用记忆中的"常识结果"。',
-    prin2_h:"显式优于隐式", prin2_p:'参数、阈值、版本写进命令行与配置，不在报告里"默认处理"。',
-    prin3_h:"上下文感知", prin3_p:"技能声明适用数据类型与样本量范围，超范围时主动降级并说明。",
-    prin4_h:"输出先行", prin4_p:"先约定目录结构与产物清单，再开始写第一行分析代码。",
-    prin5_h:"报告即契约", prin5_p:"交付报告的每一张图、每一个数字，都能定位到生成它的那段代码。",
-    road_label:"06 · Roadmap", road_title:"建设路线",
-    road1_h:"技能框架", road1_p:"技能库骨架、契约规范、报告与代码语料整理。",
-    road2_h:"转录组 + 单细胞", road2_p:"bulk-rna-seq / sc-rna-seq / ml-biomarker 完整参考实现。",
-    road3_h:"流行病分析域", road3_p:"gbd-analysis 与 mendelian-randomization 技能落地。",
-    road4_h:"全域覆盖", road4_p:"全部技能稳定版，配套端到端示例项目与英文文档。",
-    quote_text:'"分析的终点不是图表，而是一份<em>别人愿意相信</em>的报告。"',
-    quote_attr:"— 写在整理第 60 份交付报告之后",
-    cta_title:"把重复的分析，交给 Agent。",
-    cta_desc:"安装 bio-dev，让你的 AI 工具按真实项目的标准跑完从原始数据到交付报告的全流程。",
-    cta_btn1:"前往 GitHub", cta_btn2:"访问作者博客 →",
-    f_blog:"博客", f_meta:"单文件静态页面 · 无依赖 · 灵感来自"
+    stat1_lbl:"技能", stat2_lbl:"分类领域", stat3_lbl:"Agent 平台",
+    skills_label:"01 · Skills Index", skills_title:"技能索引",
+    skills_desc:'技能清单在 <span class="mono" style="font-size:13px">skills.js</span> 中维护，页面自动生成。',
+    empty_h:"技能建设中", empty_p:'在仓库根目录的 <code>skills.js</code> 里添加条目，这里会自动生成技能卡片。',
+    open_repo:"查看目录 →",
+    qs_label:"02 · Quick Start", qs_title:"快速开始", qs_desc:"安装技能后，把提示词直接交给你的 AI Agent。",
+    copy:"复制", copied:"已复制 ✓",
+    inst_label:"03 · Installation", inst_title:"安装指南", inst_desc:"支持主流 Agent 平台，一条命令完成全局安装。",
+    f_blog:"博客", f_meta:"单文件静态页面 · 无构建依赖 · 页面设计参考"
   },
   en: {
-    nav_skills:"Skills", nav_quickstart:"Quick Start", nav_install:"Install", nav_philosophy:"Philosophy", nav_roadmap:"Roadmap", nav_github:"GitHub",
-    hero_badge:"v0.1 · Continuously built from real delivered projects",
-    hero_title:'Make <span class="bio">AI</span> your <em>bioinformatics</em> research partner',
-    hero_subtitle:'bio-dev is a skill library for AI agents, distilled from <b>60+ real delivered reports</b> and <b>900+ R analysis scripts</b>, covering transcriptomics, single-cell, GBD, Mendelian randomization and more.',
+    nav_skills:"Skills", nav_quickstart:"Quick Start", nav_install:"Install", nav_github:"GitHub",
+    hero_badge:"🚧 Under construction · skills coming soon",
+    hero_title:'My <span class="bio">bioinformatics</span> AI skill library',
+    hero_subtitle:"bio-dev hosts the bioinformatics analysis skills I've built. Each skill is a self-contained directory that AI agents (Codex / Claude Code / ZCode) can load and invoke directly.",
     hero_cta1:"Install Skills", hero_cta2:"Browse Skills ↓",
-    stat1_num:"10", stat1_lbl:"Core Skills", stat2_lbl:"Delivered Reports", stat3_lbl:"R Scripts", stat4_lbl:"Analysis Domains",
-    phil_label:"01 · Philosophy", phil_title:"Design Philosophy",
-    phil_desc:"A skill is not a copied tutorial — it compresses workflows proven across real projects into contracts an agent can execute directly.",
-    phil1_h:"Distilled from real projects", phil1_p:'Every skill is backed by dozens of <b>actually delivered</b> analysis reports and their R code — not textbook pseudo-pipelines. Pitfalls met in production are written straight into the contract.',
-    phil2_h:"Reproducibility first", phil2_p:'Fixed directory layout, random seeds, pinned dependencies and <b>per-script intermediate outputs</b> — anyone holding the output folder can replay every step from raw data to report figures.',
-    phil3_h:"Machine-readable by design", phil3_p:'Skills ship as SKILL.md contracts: explicit inputs/outputs, failure modes listed up front, checklists that are verifiable item by item — so agents <b>read it once</b> and execute without improvising.',
-    skills_label:"02 · Skills Index", skills_title:"Skills Index",
-    skills_desc:"Each skill is a self-contained directory: contract + reference implementation + report template. Filter by category.",
-    qs_label:"03 · Quick Start", qs_title:"Quick Start", qs_desc:"After installing, hand the prompt below to your AI agent.",
-    copy:"Copy", copied:"Copied ✓", qs_note:"Combine skills freely per project — the agent auto-loads the full contract of each skill.",
-    inst_label:"04 · Installation", inst_title:"Installation", inst_desc:"Works with mainstream agent platforms — one command for a global install.",
-    prin_label:"05 · Principles", prin_title:"Five Contracts",
-    prin1_h:"Primary sources first", prin1_p:'Conclusions must come from this run\'s output files — never from "common knowledge" in memory.',
-    prin2_h:"Explicit over implicit", prin2_p:"Parameters, thresholds and versions go into commands and configs — never silently defaulted in a report.",
-    prin3_h:"Context aware", prin3_p:"Skills declare applicable data types and sample-size ranges, and degrade gracefully with a note when out of range.",
-    prin4_h:"Output first", prin4_p:"Agree on the directory layout and artifact list before writing the first line of analysis code.",
-    prin5_h:"The report is the contract", prin5_p:"Every figure and number in a delivered report must trace back to the exact code that produced it.",
-    road_label:"06 · Roadmap", road_title:"Roadmap",
-    road1_h:"Skill framework", road1_p:"Library skeleton, contract spec, report & code corpus curation.",
-    road2_h:"Transcriptomics + single-cell", road2_p:"Full reference implementations of bulk-rna-seq / sc-rna-seq / ml-biomarker.",
-    road3_h:"Epidemiology domains", road3_p:"gbd-analysis and mendelian-randomization skills land.",
-    road4_h:"Full coverage", road4_p:"All skills stable, with end-to-end example projects and English docs.",
-    quote_text:'"The end of an analysis is not a figure — it is a report <em>others are willing to trust</em>."',
-    quote_attr:"— written after curating the 60th delivered report",
-    cta_title:"Hand the repetitive analysis to your agent.",
-    cta_desc:"Install bio-dev and let your AI tool run the full pipeline — from raw data to deliverable report — at real-project standards.",
-    cta_btn1:"Go to GitHub", cta_btn2:"Visit the author's blog →",
-    f_blog:"Blog", f_meta:"Single-file static page · zero dependencies · inspired by"
+    stat1_lbl:"Skills", stat2_lbl:"Categories", stat3_lbl:"Agent Platforms",
+    skills_label:"01 · Skills Index", skills_title:"Skills Index",
+    skills_desc:'The skill list lives in <span class="mono" style="font-size:13px">skills.js</span>; this page renders it automatically.',
+    empty_h:"No skills yet", empty_p:'Add entries to <code>skills.js</code> in the repo root and the cards will appear here automatically.',
+    open_repo:"Browse the repo →",
+    qs_label:"02 · Quick Start", qs_title:"Quick Start", qs_desc:"After installing, hand the prompt to your AI agent.",
+    copy:"Copy", copied:"Copied ✓",
+    inst_label:"03 · Installation", inst_title:"Installation", inst_desc:"Works with mainstream agent platforms — one command for a global install.",
+    f_blog:"Blog", f_meta:"Single-file static page · zero build dependencies · design inspired by"
   }
 };
 
-/* ============ Skills data ============ */
-const CATS = [
-  { id:"all",     zh:"全部",       en:"All" },
-  { id:"bulk",    zh:"转录组",     en:"Bulk RNA-seq" },
-  { id:"sc",      zh:"单细胞",     en:"Single-cell" },
-  { id:"epi",     zh:"GBD / MR",   en:"GBD / MR" },
-  { id:"pharma",  zh:"网络药理学", en:"Pharmacology" },
-  { id:"ml",      zh:"机器学习",   en:"Machine Learning" },
-  { id:"immune",  zh:"免疫微环境", en:"Immune" },
-  { id:"writing", zh:"报告与图表", en:"Report & Figures" }
-];
-const SKILLS = [
-  { name:"bulk-rna-seq", cat:"bulk", status:"stable",
-    zh:{ t:"转录组差异分析", d:"DESeq2 / limma 差异表达、批次效应校正、GO/KEGG/GSEA 富集、预后模型输入矩阵制备。" },
-    en:{ t:"Bulk differential analysis", d:"DESeq2/limma DE, batch-effect correction, GO/KEGG/GSEA enrichment, matrix prep for prognostic modeling." },
-    tags:["DESeq2","limma","clusterProfiler","GSEA"] },
-  { name:"sc-rna-seq", cat:"sc", status:"beta",
-    zh:{ t:"单细胞转录组", d:"QC 过滤、标准流程降维聚类、双细胞与周期效应处理、细胞类型注释、亚群差异与细胞通信。" },
-    en:{ t:"Single-cell RNA-seq", d:"QC filtering, canonical dimensional reduction & clustering, doublet/cycle handling, cell-type annotation, subcluster DE and cell-cell communication." },
-    tags:["Seurat","UMAP","SingleR","CellChat"] },
-  { name:"gbd-analysis", cat:"epi", status:"stable",
-    zh:{ t:"GBD 疾病负担分析", d:"GBD 数据抽取与年龄标准化、Joinpoint 趋势、APC/贝叶斯预测、1990–2021 跨国比较与制图。" },
-    en:{ t:"GBD burden analysis", d:"GBD extraction and age standardization, Joinpoint trends, APC/Bayesian projection, 1990–2021 cross-country comparison and mapping." },
-    tags:["GBD","Joinpoint","APC","ggplot2"] },
-  { name:"mendelian-randomization", cat:"epi", status:"stable",
-    zh:{ t:"孟德尔随机化", d:"两样本 MR（IVW/WMEgger/加权中位数）、多暴露中介分析、敏感性分析与水平多效性检验、森林图与漏斗图。" },
-    en:{ t:"Mendelian randomization", d:"Two-sample MR (IVW/WM-Egger/weighted median), mediation analysis, sensitivity and horizontal pleiotropy tests, forest & funnel plots." },
-    tags:["TwoSampleMR","IVW","mediation","MR-PRESSO"] },
-  { name:"network-pharmacology", cat:"pharma", status:"beta",
-    zh:{ t:"网络药理学", d:"成分-靶点收集与 Venn 交集、PPI 网络与核心靶点、GO/KEGG 富集、分子对接与 ceRNA 调控网络构建。" },
-    en:{ t:"Network pharmacology", d:"Compound-target collection and Venn intersection, PPI network with hub genes, enrichment, molecular docking and ceRNA network building." },
-    tags:["TCMSP","STRING","AutoDock","Cytoscape"] },
-  { name:"ml-biomarker", cat:"ml", status:"beta",
-    zh:{ t:"机器学习标志物筛选", d:"LASSO/SVM/随机森林/Boruta 特征选择、多模型 ROC 对比、风险评分、列线图与校准曲线。" },
-    en:{ t:"ML biomarker screening", d:"LASSO/SVM/RF/Boruta feature selection, multi-model ROC comparison, risk scoring, nomogram and calibration curves." },
-    tags:["glmnet","randomForest","rms","e1071"] },
-  { name:"immune-microenvironment", cat:"immune", status:"beta",
-    zh:{ t:"免疫微环境量化", d:"CIBERSORT/TIMER/SSGSEA 浸润估计、TMB 与 MSI、免疫治疗响应分组、免疫检查点与亚型间差异。" },
-    en:{ t:"Immune microenvironment", d:"CIBERSORT/TIMER/SSGSEA infiltration, TMB & MSI, immunotherapy response stratification, checkpoint differential analysis across subtypes." },
-    tags:["CIBERSORT","TIMER","ssGSEA","TMB"] },
-  { name:"cell-death-landscape", cat:"bulk", status:"draft",
-    zh:{ t:"细胞死亡与代谢景观", d:"铁死亡/铜死亡/Disulfidptosis 等程序性死亡基因集分型，乳酸化/糖酵解/氨基酸代谢通路评分与临床关联。" },
-    en:{ t:"Cell-death & metabolism landscape", d:"Ferroptosis/cuproptosis/disulfidptosis-based subtyping, lactylation/glycolysis/amino-acid pathway scoring and clinical association." },
-    tags:["ferroptosis","lactylation","consensusClusterPlus","GSVA"] },
-  { name:"fig-publish", cat:"writing", status:"draft",
-    zh:{ t:"出版级图表复刻", d:"ggplot2 出版主题、配色系统与拼图布局，柱状/火山/森林/桑基/OncoPrint 等交付图型的规范画法。" },
-    en:{ t:"Publication-grade figures", d:"ggplot2 publication themes, palette system and patchwork layouts — canonical recipes for volcano, forest, sankey, OncoPrint and more." },
-    tags:["ggplot2","patchwork","ggsci","aplot"] },
-  { name:"report-writer", cat:"writing", status:"draft",
-    zh:{ t:"生信报告写作", d:"从 60+ 份真实交付报告提炼的结构模板与语言规范：方法学描述、结果解读、图表引用与结论边界。" },
-    en:{ t:"Report writing", d:"Structure templates and language conventions distilled from 60+ real delivered reports: methods wording, results interpretation, figure referencing and conclusion scoping." },
-    tags:["template","docx","方法学","结论边界"] }
-];
+/* ============ 技能数据（在 skills.js 中维护） ============ */
+const SKILLS = (window.BIO_DEV_SKILLS || []).map(s => ({
+  status: "stable", tags: [], repo: null, ...s
+}));
 
 /* ============ State & elements ============ */
 let lang = localStorage.getItem("bio-dev-lang") || "zh";
@@ -536,7 +324,7 @@ function applyI18n(){
     if(I18N[lang][k] !== undefined) el.innerHTML = I18N[lang][k];
   });
   $("#langToggle").textContent = lang === "zh" ? "EN" : "中文";
-  renderCats(); renderSkills(); renderInstall();
+  renderCats(); renderSkills(); renderInstall(); renderStats();
 }
 $("#langToggle").addEventListener("click", ()=>{
   lang = lang === "zh" ? "en" : "zh";
@@ -544,28 +332,50 @@ $("#langToggle").addEventListener("click", ()=>{
   applyI18n();
 });
 
-/* ============ Skills rendering ============ */
-const STATUS_CLASS = { stable:"badge--stable", beta:"badge--beta", draft:"badge--draft" };
+/* ============ 分类从技能数据自动派生 ============ */
+function cats(){
+  const seen = new Map();
+  for(const s of SKILLS) if(s.cat) seen.set(s.cat, s.catLabel || s.cat);
+  return [{ id:"all", label: lang==="zh" ? "全部" : "All" },
+          ...[...seen.entries()].map(([id,label])=>({ id, label }))];
+}
 function renderCats(){
-  $("#skillCats").innerHTML = CATS.map(c=>
-    `<button class="cat-chip${c.id===activeCat?" active":""}" data-cat="${c.id}">${c[lang]}</button>`
+  $("#skillCats").innerHTML = cats().map(c=>
+    `<button class="cat-chip${c.id===activeCat?" active":""}" data-cat="${c.id}">${c.label}</button>`
   ).join("");
   document.querySelectorAll(".cat-chip").forEach(b=>b.addEventListener("click",()=>{
     activeCat = b.dataset.cat; renderCats(); renderSkills();
   }));
 }
+function renderStats(){
+  $("#statSkills").textContent = SKILLS.length;
+  $("#statCats").textContent = new Set(SKILLS.map(s=>s.cat).filter(Boolean)).size;
+}
+
+/* ============ Skills rendering ============ */
+const STATUS_CLASS = { stable:"badge--stable", beta:"badge--beta", draft:"badge--draft" };
 function renderSkills(){
+  const grid = $("#skillGrid");
+  if(SKILLS.length === 0){
+    grid.innerHTML = `<div class="skills__empty">
+      <div class="icon">🧪</div>
+      <h3>${I18N[lang].empty_h}</h3>
+      <p>${I18N[lang].empty_p}</p>
+    </div>`;
+    return;
+  }
   const list = SKILLS.filter(s=>activeCat==="all"||s.cat===activeCat);
-  $("#skillGrid").innerHTML = list.map((s,i)=>{
-    const info = s[lang];
+  grid.innerHTML = list.map((s,i)=>{
+    const info = s[lang] || s.zh;
     return `<article class="skill-card" style="animation-delay:${Math.min(i*45,360)}ms">
       <div class="skill-card__top">
         <span class="skill-card__name">${s.name}</span>
-        <span class="badge ${STATUS_CLASS[s.status]}">${s.status}</span>
+        <span class="badge ${STATUS_CLASS[s.status]||"badge--draft"}">${s.status}</span>
       </div>
       <h3>${info.t}</h3>
       <p>${info.d}</p>
-      <div class="skill-card__tags">${s.tags.map(t=>`<span>${t}</span>`).join("")}</div>
+      ${s.tags && s.tags.length ? `<div class="skill-card__tags">${s.tags.map(t=>`<span>${t}</span>`).join("")}</div>` : ""}
+      ${s.repo ? `<a class="skill-card__link" href="${s.repo}" target="_blank" rel="noopener">${I18N[lang].open_repo}</a>` : ""}
     </article>`;
   }).join("");
 }
@@ -573,30 +383,22 @@ function renderSkills(){
 /* ============ Install tabs ============ */
 const INSTALL = [
   { id:"codex", zh:"Codex / ZCode", en:"Codex / ZCode",
-    guideZh:`<h4>Codex / ZCode</h4><ol><li>通过 skills 注册表一条命令全局安装</li><li>重启会话后 Agent 自动发现技能</li><li>在新会话里直接说“用 <code>bulk-rna-seq</code> 分析这份数据”</li></ol>`,
-    guideEn:`<h4>Codex / ZCode</h4><ol><li>Install globally with one command via the skills registry</li><li>Restart the session; the agent discovers skills automatically</li><li>Say “analyze this data with <code>bulk-rna-seq</code>” in a new session</li></ol>`,
+    guideZh:`<h4>Codex / ZCode</h4><ol><li>通过 skills 注册表一条命令全局安装</li><li>重启会话后 Agent 自动发现技能</li><li>提示词中点名技能名即可调用</li></ol>`,
+    guideEn:`<h4>Codex / ZCode</h4><ol><li>Install globally via the skills registry</li><li>Restart the session; skills are discovered automatically</li><li>Reference the skill by name in your prompt</li></ol>`,
     term:`<span class="cm"># 全局安装 / global install</span>
 npx skills add <span class="hl">sher-l/bio-dev</span> -g` },
   { id:"claude", zh:"Claude Code", en:"Claude Code",
-    guideZh:`<h4>Claude Code</h4><ol><li>克隆到 <code>~/.claude/skills/</code> 个人技能目录</li><li>或在项目内使用 <code>.claude/skills/</code> 仅当前项目生效</li><li>提示词中点名技能名即可调用</li></ol>`,
+    guideZh:`<h4>Claude Code</h4><ol><li>克隆到 <code>~/.claude/skills/</code> 用户技能目录</li><li>或在项目内使用 <code>.claude/skills/</code> 仅当前项目生效</li><li>提示词中点名技能名即可调用</li></ol>`,
     guideEn:`<h4>Claude Code</h4><ol><li>Clone into <code>~/.claude/skills/</code> for a user-level install</li><li>Or use <code>.claude/skills/</code> inside a repo for project scope</li><li>Reference the skill by name in your prompt</li></ol>`,
     term:`<span class="cm"># 用户级安装 / user-level install</span>
 git clone https://github.com/<span class="hl">sher-l/bio-dev</span> \\
   ~/.claude/skills/bio-dev` },
-  { id:"opencode", zh:"OpenCode / 其他", en:"OpenCode / Others",
-    guideZh:`<h4>OpenCode / 其他 Agent</h4><ol><li>将技能目录放入你所用 Agent 的技能扫描路径</li><li>每个子目录都包含标准 <code>SKILL.md</code></li><li>支持任何能读取 SKILL.md 约约的工具</li></ol>`,
-    guideEn:`<h4>OpenCode / Other agents</h4><ol><li>Drop the skill directories into your agent's skill scan path</li><li>Each subdirectory ships a standard <code>SKILL.md</code></li><li>Works with any tool that reads SKILL.md contracts</li></ol>`,
+  { id:"generic", zh:"其他 Agent / ZIP", en:"Others / ZIP",
+    guideZh:`<h4>其他 Agent / 手动下载</h4><ol><li>下载仓库 ZIP 或克隆后，把 <code>skills/</code> 下的目录放入所用 Agent 的技能扫描路径</li><li>每个技能目录都含标准 <code>SKILL.md</code></li></ol>`,
+    guideEn:`<h4>Other agents / manual</h4><ol><li>Download or clone the repo, then copy the <code>skills/</code> directories into your agent's skill scan path</li><li>Every skill directory ships a standard <code>SKILL.md</code></li></ol>`,
     term:`<span class="cm"># 通用安装 / generic install</span>
 git clone https://github.com/<span class="hl">sher-l/bio-dev</span>.git
-<span class="gr"># 然后把 skills/ 下的目录复制到 Agent 技能路径</span>` },
-  { id:"zip", zh:"手动 ZIP", en:"Manual ZIP",
-    guideZh:`<h4>手动下载</h4><ol><li>从 GitHub 下载仓库 ZIP 并解压</li><li>仅需 <code>skills/</code> 目录，页面本身可忽略</li><li>校验发布标签后再投入生产使用</li></ol>`,
-    guideEn:`<h4>Manual download</h4><ol><li>Download the repository ZIP from GitHub and extract</li><li>Only the <code>skills/</code> directory is needed; the page itself is optional</li><li>Verify the release tag before production use</li></ol>`,
-    term:`<span class="cm"># 解压后得到 / after extraction</span>
-<span class="gr">bio-dev/skills/
-├── bulk-rna-seq/SKILL.md
-├── sc-rna-seq/SKILL.md
-└── ...</span>` }
+<span class="gr"># 把 skills/ 下的目录复制到 Agent 技能路径</span>` }
 ];
 let activeTab = "codex";
 function renderInstall(){
