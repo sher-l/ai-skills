@@ -8,6 +8,8 @@ from pathlib import Path
 import re
 import sys
 
+import diagnostic_output
+
 
 FORMATS = {"png", "pdf"}
 RESULT_NAME = re.compile(r"^[0-9]{2,}[._-][A-Za-z0-9][A-Za-z0-9._-]*\.[A-Za-z0-9]+$")
@@ -15,27 +17,13 @@ PLACEHOLDER = re.compile(r"(?:TODO|TBD|REPLACE|PENDING|EVIDENCE_REQUIRED|EVIDENC
 
 
 def make_diagnostics(errors: list[str], warnings: list[str], subject: str) -> list[dict[str, object]]:
-    entries: list[dict[str, object]] = []
-    for message in errors:
-        code = "figure/source" if "source" in message or "provenance" in message else "figure/invalid"
-        entries.append({
-            "code": code,
-            "severity": "error",
-            "message": message,
-            "subject": {"path": subject},
-            "evidence": {},
-            "supportedFixes": ["编辑 figure manifest 或真实图件来源后重新验证"],
-        })
-    for message in warnings:
-        entries.append({
-            "code": "figure/evidence-needed",
-            "severity": "warning",
-            "message": message,
-            "subject": {"path": subject},
-            "evidence": {},
-            "supportedFixes": ["补齐图件来源、运行记录或参数，并重新验证"],
-        })
-    return entries
+    return diagnostic_output.entries(
+        errors,
+        warnings,
+        subject,
+        domain="figure",
+        fixes="编辑图件合同或真实来源后重新运行校验",
+    )
 
 
 def _relative(value: object, label: str, root: Path, final: bool, errors: list[str]) -> None:
@@ -186,11 +174,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.as_json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
-        print(f"FIGURE_MANIFEST_{status} errors={len(errors)} warnings={len(warnings)}")
-        for item in errors:
-            print(item, file=sys.stderr)
-        for item in warnings:
-            print(item)
+        diagnostic_output.print_result(
+            "FIGURE_MANIFEST",
+            status,
+            errors,
+            warnings,
+            domain="figure",
+            fixes="编辑图件合同或真实来源后重新运行校验",
+        )
     return 0 if status == "PASS" else 2
 
 

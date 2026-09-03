@@ -12,6 +12,8 @@ from pathlib import Path
 import re
 import sys
 
+import diagnostic_output
+
 
 TOP_FIELDS = {
     "schema_version", "module", "quality_profile", "result_layout", "title",
@@ -35,27 +37,13 @@ PLACEHOLDER = re.compile(r"(?:EVIDENCE_REQUIRED|EVIDENCE_NEEDED|TODO|TBD|REPLACE
 
 
 def diagnostics(errors: list[str], warnings: list[str], subject: str) -> list[dict[str, object]]:
-    entries: list[dict[str, object]] = []
-    for message in errors:
-        code = "evidence/path" if "path" in message or "file" in message else "evidence/invalid"
-        entries.append({
-            "code": code,
-            "severity": "error",
-            "message": message,
-            "subject": {"path": subject},
-            "evidence": {},
-            "supportedFixes": ["edit the named evidence field and validate again"],
-        })
-    for message in warnings:
-        entries.append({
-            "code": "evidence/needed",
-            "severity": "warning",
-            "message": message,
-            "subject": {"path": subject},
-            "evidence": {},
-            "supportedFixes": ["record the missing fact or run receipt, then validate again"],
-        })
-    return entries
+    return diagnostic_output.entries(
+        errors,
+        warnings,
+        subject,
+        domain="evidence",
+        fixes="补齐标记的事实或运行记录后重新运行校验",
+    )
 
 
 def _relative_path(value: object, label: str, root: Path | None, final: bool, errors: list[str]) -> None:
@@ -366,11 +354,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.as_json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
-        print(f"EVIDENCE_PACK_{status} errors={len(errors)} warnings={len(warnings)}")
-        for item in errors:
-            print(item, file=sys.stderr)
-        for item in warnings:
-            print(item)
+        diagnostic_output.print_result(
+            "EVIDENCE_PACK",
+            status,
+            errors,
+            warnings,
+            domain="evidence",
+            fixes="补齐标记的事实或运行记录后重新运行校验",
+        )
     return 0 if status == "PASS" else 2
 
 

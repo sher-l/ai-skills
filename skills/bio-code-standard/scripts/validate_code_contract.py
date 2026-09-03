@@ -8,6 +8,8 @@ from pathlib import Path
 import re
 import sys
 
+import diagnostic_output
+
 
 PLACEHOLDER = re.compile(r"(?:TODO|REPLACE|EVIDENCE_REQUIRED|EVIDENCE_NEEDED|XXX|\bXX\b|PENDING)", re.IGNORECASE)
 ABSOLUTE = re.compile(r"(?:^|[=:(,\s])(?:/media/|/home/|[A-Za-z]:[\\/])")
@@ -231,24 +233,13 @@ def contains_placeholder(value: object) -> bool:
 
 
 def diagnostics(errors: list[str], warnings: list[str], subject: str) -> list[dict[str, object]]:
-    entries: list[dict[str, object]] = []
-    for message in errors:
-        if "placeholder" in message:
-            code = "draft/unresolved-marker"
-        elif "absolute" in message:
-            code = "source/absolute-path"
-        elif "runtime_install" in message:
-            code = "runtime/dependency-install"
-        elif "canonical" in message:
-            code = "contract/canonical-source"
-        elif "missing" in message:
-            code = "contract/missing-field"
-        else:
-            code = "contract/invalid"
-        entries.append({"code": code, "severity": "error", "message": message, "subject": {"path": subject}, "evidence": {}, "supportedFixes": ["edit the named contract or source and run validation again"]})
-    for message in warnings:
-        entries.append({"code": "review/manual-check", "severity": "warning", "message": message, "subject": {"path": subject}, "evidence": {}, "supportedFixes": ["review the named item and record the decision"]})
-    return entries
+    return diagnostic_output.entries(
+        errors,
+        warnings,
+        subject,
+        domain="contract",
+        fixes="编辑标记的合同或源码后重新运行校验",
+    )
 
 
 def _source_review_result(contract: object, root: Path, final: bool, required: bool = False) -> tuple[list[str], list[str]]:
@@ -352,9 +343,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.as_json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
-        print(f"CODE_CONTRACT_{result['status']} errors={len(errors)} warnings={len(warnings)}")
-        for item in errors + warnings:
-            print(item, file=sys.stderr if item in errors else sys.stdout)
+        diagnostic_output.print_result(
+            "CODE_CONTRACT",
+            result["status"],
+            errors,
+            warnings,
+            domain="contract",
+            fixes="编辑标记的合同或源码后重新运行校验",
+        )
     return 0 if status == "PASS" and not errors else 2
 
 

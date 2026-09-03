@@ -52,7 +52,12 @@
   该层，同一逻辑图的 PNG/PDF 仅改变扩展名。
 - 存量模块的嵌套路径只作为迁移输入记录；发布前迁移到同一平铺合同，脚本不能临时决定第二种布局。
   `cache/` 只放真实下游消费者需要的对象。
-- 错误返回 `code/subject/evidence/supportedFixes`，保留 attempt、error 和部分状态；
+- 错误先直接输出 `错误类型`、`错误内容`、`修复建议`，再输出退出码；类型至少使用
+  `INPUT_ERROR`、`CONFIG_ERROR`、`DEPENDENCY_ERROR`、`RUNTIME_ERROR`、`OUTPUT_ERROR`、
+  `EVIDENCE_ERROR` 或 `DECISION_REQUIRED`。stderr、当前阶段日志和机器记录必须同时保留
+  阶段/对象、具体路径或字段、实际值、证据位置和修复建议。JSON 在兼容
+  `code/subject/evidence/supportedFixes` 的同时增加 `error_type` 与 `content`；
+  退出码只供上游程序判断，不能单独作为错误说明；
   禁止静默 fallback、全局 warning 抑制、`setwd` 链和运行时依赖安装。
 - 成功发布前扫描绝对路径、占位符、任务句、乱码、错误指标标签和未声明输出；源代码
   与配置变更必须重新运行 source review 和受影响阶段。

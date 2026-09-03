@@ -15,6 +15,8 @@ import re
 import sys
 from datetime import date
 
+import diagnostic_output
+
 
 SCHEMA_VERSION = "2.2"
 DEFAULT_DOC = Path("doc/source-review.md")
@@ -139,8 +141,10 @@ def _diag(message: str, subject: str, severity: str = "error") -> dict[str, obje
         code = "source-review/incomplete"
     return {
         "code": code,
+        "error_type": diagnostic_output.classify(message, "source"),
         "severity": severity,
         "message": message,
+        "content": message,
         "subject": {"path": subject},
         "evidence": {},
         "supportedFixes": ["编辑 doc/source-review.md 中标记的行后重新运行 source-review validate"],
@@ -406,15 +410,17 @@ def init_command(args: argparse.Namespace) -> int:
     try:
         output.relative_to(root)
     except ValueError:
-        print(f"SOURCE_REVIEW_BLOCKED: output must be inside source root: {output}", file=sys.stderr)
+        print("错误类型: INPUT_ERROR\n错误内容: output 必须位于 source root 内: "
+              f"{output}\n修复建议: 将 source-review 文档放到模块根目录的 doc/ 下\n退出码: 2", file=sys.stderr)
         return 2
     if output.exists() and not args.force:
-        print(f"SOURCE_REVIEW_BLOCKED: output exists (use --force only after review): {output}", file=sys.stderr)
+        print("错误类型: OUTPUT_ERROR\n错误内容: 输出文件已存在（审定后才可使用 --force）: "
+              f"{output}\n修复建议: 先备份并确认后使用 --force，或选择新路径\n退出码: 2", file=sys.stderr)
         return 2
     try:
         render_document(args.module, root, output)
     except (OSError, ValueError) as exc:
-        print(f"SOURCE_REVIEW_BLOCKED: {exc}", file=sys.stderr)
+        print(f"错误类型: OUTPUT_ERROR\n错误内容: {exc}\n修复建议: 检查源码目录和文档写入权限\n退出码: 2", file=sys.stderr)
         return 2
     print(json.dumps({"status": "DRAFT", "path": str(output), "files": len(source_inventory(root))}, ensure_ascii=False))
     return 0
@@ -440,11 +446,14 @@ def main(argv: list[str] | None = None) -> int:
     if args.as_json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
-        print(f"SOURCE_REVIEW_{result['status']} errors={len(result['errors'])} warnings={len(result['warnings'])}")
-        for item in result["errors"]:
-            print(item, file=sys.stderr)
-        for item in result["warnings"]:
-            print(item)
+        diagnostic_output.print_result(
+            "SOURCE_REVIEW",
+            result["status"],
+            result["errors"],
+            result["warnings"],
+            domain="source",
+            fixes="编辑 doc/source-review.md 标记的行后重新运行 source-review validate",
+        )
     return 0 if result["status"] == "PASS" else 2
 
 

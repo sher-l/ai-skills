@@ -58,6 +58,23 @@ python scripts/bio_code.py figure MODULE/.code-contract/figure_manifest.json --r
 `quality_profile=release` 且 `--final` 全部通过才返回 `PASS`/0；历史
 `module_contract` 布局只能在迁移审查阶段读取，不能作为 v2.2 发布布局。
 
+## 错误输出
+
+失败时先输出人类可读的错误类型和具体内容，再输出退出码；退出码不能替代错误说明。
+错误至少包含：类型、阶段或对象、文件/字段/实际值、证据位置和修复建议，并同时写入
+stderr 与当前阶段日志。机器 JSON 在保留 `code`、`message`、`subject`、`evidence`
+和 `supportedFixes` 的同时，必须增加 `error_type` 与 `content`。
+
+标准类型为 `INPUT_ERROR`、`CONFIG_ERROR`、`DEPENDENCY_ERROR`、`RUNTIME_ERROR`、
+`OUTPUT_ERROR`、`EVIDENCE_ERROR` 和 `DECISION_REQUIRED`。例如：
+
+```text
+错误类型: INPUT_ERROR
+错误内容: [calculate] 找不到 input.expression：data/expression.tsv
+修复建议: 检查 module.config.ini 中的相对路径和文件编码
+退出码: 2
+```
+
 ## 按需读取
 
 - Step 0、官方资料和冲突门禁：见 [source-review.md](references/source-review.md)。

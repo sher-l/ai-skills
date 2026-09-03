@@ -117,6 +117,23 @@ class CodeSkillSmoke(unittest.TestCase):
             self.assertNotEqual(checked.returncode, 0)
             self.assertIn("unknown top-level", checked.stderr)
 
+    def test_error_output_names_type_and_content(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "contract.json"
+            path.write_text("{}", encoding="utf-8")
+            plain = run("validate_code_contract.py", str(path))
+            self.assertNotEqual(plain.returncode, 0)
+            self.assertIn("错误类型:", plain.stderr)
+            self.assertIn("错误内容:", plain.stderr)
+            self.assertIn("修复建议:", plain.stderr)
+            self.assertIn("退出码:", plain.stderr)
+            machine = run("validate_code_contract.py", str(path), "--json")
+            self.assertNotEqual(machine.returncode, 0)
+            payload = json.loads(machine.stdout)
+            self.assertTrue(payload["diagnostics"])
+            self.assertIn("error_type", payload["diagnostics"][0])
+            self.assertIn("content", payload["diagnostics"][0])
+
     def test_result_layout_requires_flat_numbered_paths(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
