@@ -7,7 +7,7 @@
  *   name      技能目录名（等宽字体展示，如 bulk-rna-seq）
  *   cat       分类 id（自动汇总成筛选按钮，板块随技能沉淀逐步细分）
  *   catLabel  分类的显示名（同一 cat 只需写一次，之后可省略）
- *   status    stable | beta | draft（徽章颜色不同）
+ *   status    stable | beta | draft（页面显示中文状态）
  *   tags      工具/关键词标签，可省略
  *   repo      技能目录的链接，可省略
  *   zh / en   中英文标题（t）与描述（d）；只写 zh 也可以
@@ -33,8 +33,8 @@ window.AI_SKILLS = [
     name: "bio-code-standard",
     cat: "bio",
     catLabel: "生信分析",
-    status: "stable",
-    tags: ["R", "Python", "source-review", "statistics", "provenance", "v2.2"],
+    status: "beta",
+    tags: ["R", "Python", "源码审查", "统计", "可复现", "v2.2"],
     repo: "https://github.com/sher-l/ai-skills/tree/main/skills/bio-code-standard",
     zh: {
       t: "生信分析代码规范",
@@ -48,8 +48,8 @@ window.AI_SKILLS = [
   {
     name: "bio-report-writing",
     cat: "bio",
-    status: "stable",
-    tags: ["report-coder", "DOCX", "template", "captions", "QA"],
+    status: "beta",
+    tags: ["报告 coder", "DOCX", "模板", "图注", "验收"],
     repo: "https://github.com/sher-l/ai-skills/tree/main/skills/bio-report-writing",
     zh: {
       t: "生信报告 coder",
@@ -63,8 +63,8 @@ window.AI_SKILLS = [
   {
     name: "module-development-scheduler",
     cat: "bio",
-    status: "stable",
-    tags: ["routing", "Matt", "workflow", "gates", "report-only", "plot", "full"],
+    status: "beta",
+    tags: ["路由", "Matt", "工作流", "门禁", "report-only", "plot", "full"],
     repo: "https://github.com/sher-l/ai-skills/tree/main/skills/module-development-scheduler",
     zh: {
       t: "生信模块开发调度",

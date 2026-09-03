@@ -387,6 +387,7 @@ function renderStats(){
 
 /* ============ Skills rendering ============ */
 const STATUS_CLASS = { stable:"badge--stable", beta:"badge--beta", draft:"badge--draft" };
+const STATUS_LABEL = { stable:"稳定", beta:"持续更新", draft:"草案" };
 function renderSkills(){
   const grid = $("#skillGrid");
   if(SKILLS.length === 0){
@@ -403,7 +404,7 @@ function renderSkills(){
     return `<article class="skill-card" style="animation-delay:${Math.min(i*45,360)}ms">
       <div class="skill-card__top">
         <span class="skill-card__name">${s.name}</span>
-        <span class="badge ${STATUS_CLASS[s.status]||"badge--draft"}">${s.status}</span>
+        <span class="badge ${STATUS_CLASS[s.status]||"badge--draft"}">${STATUS_LABEL[s.status]||"草案"}</span>
       </div>
       <h3>${info.t}</h3>
       <p>${info.d}</p>
