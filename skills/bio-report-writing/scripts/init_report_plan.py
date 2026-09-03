@@ -66,6 +66,7 @@ def make_plan(
         # is rejected by the release validator.
         "audience": str(audience if audience is not None else pack.get("audience", "")),
         "evidence_pack": str(evidence_path),
+        "template": "report_templates/report_template.docx" if mode == "module" else "report_template.docx",
         "evidence_targets": targets,
         "sections": sections,
         "output_policy": {

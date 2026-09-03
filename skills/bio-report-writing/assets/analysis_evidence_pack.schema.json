@@ -12,6 +12,11 @@
     "audience": {"type": "string"},
     "references": {"type": "array", "items": {"$ref": "#/$defs/source"}},
     "versions": {"type": "array", "items": {"$ref": "#/$defs/source"}},
+    "terminology_sources": {"type": "array", "items": {"oneOf": [{"type": "string", "minLength": 1}, {"$ref": "#/$defs/source"}]}},
+    "notes": {"type": "array", "items": {"$ref": "#/$defs/note"}},
+    "result_table": {"$ref": "#/$defs/table"},
+    "output_table": {"$ref": "#/$defs/table"},
+    "version_table": {"$ref": "#/$defs/table"},
     "evidence_targets": {"type": "array", "items": {"$ref": "#/$defs/target"}},
     "analysis_points": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/point"}}
   },
@@ -63,13 +68,66 @@
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "path", "kind", "published", "purpose", "consumers"],
-      "properties": {"id": {"type": "string", "minLength": 1}, "path": {"type": "string", "minLength": 1}, "kind": {"type": "string", "minLength": 1}, "published": {"type": "boolean"}, "purpose": {"type": "string", "minLength": 1}, "consumers": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}}
+      "properties": {"id": {"type": "string", "minLength": 1}, "path": {"type": "string", "minLength": 1}, "kind": {"type": "string", "minLength": 1}, "description": {"type": "string"}, "published": {"type": "boolean"}, "purpose": {"type": "string", "minLength": 1}, "consumers": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}}
     },
     "reference": {
       "type": "object",
       "additionalProperties": false,
       "required": ["kind", "id", "path"],
-      "properties": {"kind": {"enum": ["figure", "table"]}, "id": {"type": "string", "minLength": 1}, "path": {"type": "string", "minLength": 1}, "caption": {"type": "string"}}
+      "properties": {
+        "kind": {"enum": ["figure", "table"]},
+        "id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "title": {"type": "string"},
+        "caption": {"type": "string"},
+        "width": {"type": "string"},
+        "caption_fields": {"$ref": "#/$defs/caption_fields"}
+      }
+    },
+    "caption_fields": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "object": {"type": "string"},
+        "comparison": {"type": "string"},
+        "groups": {"type": ["string", "array"]},
+        "panel": {"type": ["string", "array"]},
+        "axes": {"type": ["string", "array"]},
+        "units": {"type": ["string", "array"]},
+        "encoding": {"type": ["string", "array"]},
+        "n": {"type": ["string", "number", "array"]},
+        "statistics": {"type": ["string", "array"]},
+        "threshold": {"type": ["string", "number", "array"]},
+        "boundary": {"type": "string"}
+      }
+    },
+    "note": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "text"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "title": {"type": "string"},
+        "text": {"type": "string", "minLength": 1},
+        "kind": {"enum": ["direction", "unit", "boundary", "interpretation"]},
+        "border": {"const": "#5B9BD5"},
+        "fill": {"const": "#DDEBF7"},
+        "label_color": {"const": "#2F75B5"}
+      }
+    },
+    "table": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["columns", "rows"],
+      "properties": {
+        "id": {"type": "string"},
+        "caption": {"type": "string"},
+        "columns": {"type": "array", "minItems": 1, "items": {"oneOf": [{"type": "string", "minLength": 1}, {"type": "object"}]}},
+        "rows": {"type": "array", "items": {"oneOf": [{"type": "array"}, {"type": "object"}]}},
+        "align": {"type": "array"},
+        "source": {"type": "string"},
+        "preview_limit": {"type": "integer", "minimum": 0}
+      }
     },
     "point": {
       "type": "object",
@@ -88,6 +146,10 @@
         "results": {"type": "array", "items": {"$ref": "#/$defs/result"}},
         "outputs": {"type": "array", "items": {"$ref": "#/$defs/output"}},
         "figure_table_refs": {"type": "array", "items": {"$ref": "#/$defs/reference"}},
+        "notes": {"type": "array", "items": {"$ref": "#/$defs/note"}},
+        "result_table": {"$ref": "#/$defs/table"},
+        "output_table": {"$ref": "#/$defs/table"},
+        "version_table": {"$ref": "#/$defs/table"},
         "interpretation_level": {"type": "string", "enum": ["descriptive", "association", "prediction", "candidate", "mechanistic_hint"]},
         "interpretation": {"type": "string", "minLength": 1},
         "next_step": {"type": "string"},

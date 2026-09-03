@@ -1,60 +1,102 @@
 #!/usr/bin/env python3
-"""Copy into MODULE/scripts/report/generate_report.py; keep slots module-specific."""
+"""DOCX-first report renderer example.
+
+Copy this file and ``scripts/render_docx_template.py`` into a module, then
+replace ``build_slots`` with that module's fixed prose and typed facts.  The
+runtime only fills the committed DOCX template; it does not ask an AI to
+rewrite the report.
+"""
+from __future__ import annotations
+
 from pathlib import Path
 import json
+import os
 import shutil
 import subprocess
 import sys
 import tempfile
 
 
-def generate_report(root: Path, pack_file: Path, template_dir: Path, output_dir: Path) -> Path:
-    root, template_dir, output_dir = map(Path, (root, template_dir, output_dir))
-    pack = json.loads(pack_file.read_text(encoding="utf-8"))
+def build_slots(pack: dict) -> dict:
+    """Map validated facts to the template's named slots; keep this explicit."""
     point = pack["analysis_points"][0]
-    if pack.get("quality_profile") != "release" or not point.get("limitations"):
-        raise ValueError("release report requires complete evidence")
-
-    def source(rel: str) -> Path:
-        path = Path(rel)
-        candidate = (root / path).resolve()
-        if path.is_absolute() or root.resolve() not in candidate.parents or not candidate.is_file():
-            raise ValueError(f"published path is missing or escapes root: {rel}")
-        return candidate
-
-    figure = point.get("figure_table_refs", [None])[0]
-    params = {
-        "title": pack.get("title", "分析报告"),
-        "summary": point["interpretation"],
-        "scope": point["scope"],
-        "method_text": point["method"]["name"],
-        "result_text": "; ".join(str(row["name"]) for row in point["results"]),
-        "limitation_text": "；".join(point["limitations"]),
-        "figure_path": str(source(figure["path"])) if figure else "",
-        "figure_caption": figure.get("caption", point["title"]) if figure else "",
-        "table_caption": point["title"],
-        "output_text": "、".join(item["path"] for item in point["outputs"]),
-        "references_text": "；".join(item["name"] for item in pack.get("references", [])),
-        "versions_text": "；".join(f"{item['name']} {item['version']}" for item in pack.get("versions", [])),
-        "table_rows": point["results"],
+    slots: dict[str, object] = {
+        "REPORT_TITLE": pack.get("title", "分析报告"),
+        "REPORT_AUDIENCE": pack.get("audience", ""),
+        "REPORT_SUMMARY": point.get("interpretation", ""),
+        "ANALYSIS_SCOPE": point["scope"],
+        "ANALYSIS_METHOD": point["method"],
+        "ANALYSIS_QC": point.get("qc", ""),
+        "ANALYSIS_RESULT": point.get("results", []),
+        "ANALYSIS_CONCLUSION": point.get("interpretation", ""),
+        "ANALYSIS_LIMITATIONS": point.get("limitations", []),
+        "OUTPUTS_INTRO": "当前分析实际发布的业务文件及其用途。",
+        "REFERENCES": pack.get("references", []),
+        "RESULT_TABLE_ROWS": point.get("results", []),
+        "OUTPUT_TABLE_ROWS": [item for item in point.get("outputs", []) if item.get("published")],
+        "VERSION_TABLE_ROWS": pack.get("versions", []),
     }
+    comparison = point.get("comparison")
+    if isinstance(comparison, dict):
+        slots["NOTE:DIRECTION"] = {
+            "kind": "direction",
+            "text": (
+                f"{comparison.get('metric', '')}：{comparison.get('direction', '')}；"
+                f"目标组={comparison.get('target', '')}；参照组={comparison.get('reference', '')}"
+            ).lstrip("："),
+        }
+    for figure in point.get("figure_table_refs", []):
+        if not isinstance(figure, dict):
+            continue
+        ident = str(figure.get("id", "F1")).upper()
+        prefix = f"FIGURE:{ident}"
+        slots[f"{prefix}.TITLE"] = figure.get("title", ident)
+        slots[f"{prefix}.SOURCE"] = figure.get("path", "")
+        slots[f"{prefix}.CAPTION"] = figure.get("caption", "")
+        # caption_fields are used by the fixed caption builder; they are not
+        # rendered as an internal field list in the report.
+    return {"quality_profile": pack.get("quality_profile", "draft"), "slots": slots}
+
+
+def generate_report(
+    root: Path,
+    pack_file: Path,
+    template_dir: Path,
+    output_dir: Path,
+    *,
+    plan_file: Path | None = None,
+    helper: Path | None = None,
+) -> Path:
+    root, pack_file, template_dir, output_dir = map(Path, (root, pack_file, template_dir, output_dir))
+    pack = json.loads(pack_file.read_text(encoding="utf-8"))
+    if not isinstance(pack, dict) or not pack.get("analysis_points"):
+        raise ValueError("evidence pack must contain analysis_points")
+    template = template_dir / "report_template.docx"
+    if not template.is_file():
+        raise ValueError(f"missing DOCX template: {template}")
+    helper = Path(helper or os.environ.get("BIO_REPORT_TEMPLATE_HELPER", "scripts/render_docx_template.py"))
+    if not helper.is_file():
+        raise ValueError("copy scripts/render_docx_template.py or set BIO_REPORT_TEMPLATE_HELPER")
     output_dir.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="report-render-") as temporary:
         work = Path(temporary)
-        shutil.copy2(template_dir / "report_template.qmd", work / "report_template.qmd")
-        shutil.copy2(template_dir / "reference.docx", work / "reference.docx")
-        (work / "params.json").write_text(json.dumps(params, ensure_ascii=False), encoding="utf-8")
-        subprocess.run(
-            ["quarto", "render", "report_template.qmd", "--to", "docx",
-             "--execute-params", "params.json", "--output", "report.docx"],
-            cwd=work, check=True,
-        )
-        destination = output_dir / "MODULE_report.docx"
-        shutil.copy2(work / "report.docx", destination)
+        slots_file = work / "slots.json"
+        slots_file.write_text(json.dumps(build_slots(pack), ensure_ascii=False, indent=2), encoding="utf-8")
+        rendered = work / "report.docx"
+        command = [
+            sys.executable, str(helper), "--template", str(template), "--values", str(slots_file),
+            "--evidence-pack", str(pack_file), "--root", str(root), "--output", str(rendered), "--final",
+        ]
+        if plan_file is not None:
+            command.extend(["--plan", str(plan_file)])
+        subprocess.run(command, check=True)
+        destination = output_dir / f"{pack['module']}_report.docx"
+        shutil.copy2(rendered, destination)
     return destination
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
-        raise SystemExit("usage: generate_report.py INPUT_ROOT PACK.json TEMPLATE_DIR OUTPUT_DIR")
-    generate_report(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]))
+    if len(sys.argv) not in {5, 6}:
+        raise SystemExit("usage: generate_report.py INPUT_ROOT PACK.json TEMPLATE_DIR OUTPUT_DIR [PLAN.json]")
+    plan = Path(sys.argv[5]) if len(sys.argv) == 6 else None
+    generate_report(Path(sys.argv[1]), Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]), plan_file=plan)

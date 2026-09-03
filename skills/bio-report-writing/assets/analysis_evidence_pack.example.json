@@ -18,7 +18,35 @@
     "comparison": {"target": "case", "reference": "control", "metric": "logFC", "direction": "case - control"},
     "results": [{"name": "significant_features", "value": 4, "unit": "gene", "source": "result/01.DEG_all.csv"}],
     "outputs": [{"id": "OUT-01", "path": "result/01.DEG_all.csv", "kind": "table", "published": true, "purpose": "差异结果表", "consumers": ["project_analyst"]}],
-    "figure_table_refs": [],
+    "figure_table_refs": [{
+      "kind": "figure",
+      "id": "F1",
+      "path": "result/02.volcano.png",
+      "title": "差异表达火山图",
+      "caption": "case 相对 control 的差异表达火山图",
+      "caption_fields": {
+        "object": "供体级基因表达",
+        "comparison": "case − control",
+        "groups": "case、control",
+        "panel": "单面板",
+        "axes": "横轴 logFC；纵轴 −log10(P.Value)",
+        "units": "logFC；无量纲 −log10(P.Value)",
+        "encoding": "颜色表示上调、下调和未达阈值",
+        "n": "样本级推断；基因为结果单位",
+        "statistics": "P.Value 与 FDR",
+        "threshold": "FDR < 0.05 且 |logFC| > 1",
+        "boundary": "图件用于展示已发布结果，不构成因果结论"
+      }
+    }],
+    "notes": [{
+      "id": "direction",
+      "title": "比较方向",
+      "text": "logFC = case − control；正值表示 case 中相对高表达，负值表示 control 中相对高表达。",
+      "kind": "direction",
+      "border": "#5B9BD5",
+      "fill": "#DDEBF7",
+      "label_color": "#2F75B5"
+    }],
     "interpretation_level": "descriptive",
     "interpretation": "当前数据范围内的描述性差异结果",
     "next_step": "作为后续通路分析的输入",

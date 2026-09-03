@@ -1,4 +1,4 @@
 interface:
   display_name: "生信报告 coder"
-  short_description: "编写模块报告模板、renderer、图注表格与 DOCX 验收"
-  default_prompt: "使用 $bio-report-writing 编写模块自己的机械报告模板与 R/Python renderer：固定正文、显式动态 slots、真实图表、no-crop，并完成机器与目标阅读器视觉验收；一次性材料报告沿用同一合同。"
+  short_description: "编写 DOCX 报告模板、renderer、图注表格与验收"
+  default_prompt: "使用 $bio-report-writing 编写 DOCX-first 机械报告模板与 R/Python renderer：固定正文、命名 slots、结果/输出/版本表、真实图件、天蓝 Note、no-crop，并完成机器与目标阅读器验收；一次性材料报告沿用同一合同。"

@@ -15,12 +15,14 @@ import sys
 
 TOP_FIELDS = {
     "schema_version", "module", "quality_profile", "result_layout", "title",
-    "audience", "references", "versions", "evidence_targets", "analysis_points",
+    "audience", "references", "versions", "terminology_sources", "notes",
+    "result_table", "output_table", "version_table", "evidence_targets", "analysis_points",
 }
 POINT_FIELDS = {
     "id", "title", "scope", "qc", "inputs", "method", "parameters",
     "statistical_unit", "comparison", "results", "outputs", "figure_table_refs",
-    "interpretation_level", "interpretation", "next_step", "limitations", "status",
+    "notes", "result_table", "output_table", "version_table", "interpretation_level",
+    "interpretation", "next_step", "limitations", "status",
 }
 REQUIRED_POINT_FIELDS = {
     "id", "title", "scope", "inputs", "method", "parameters", "results",
@@ -103,6 +105,8 @@ def validate(value: object, root: Path | None = None, final: bool = False) -> tu
         errors.append("quality_profile must be draft or release")
     if value.get("result_layout") not in {"flat", "module_contract"}:
         errors.append("result_layout must be flat or module_contract")
+    if final and value.get("result_layout") != "flat":
+        errors.append("release result_layout must be flat; migrate the historical module_contract layout first")
     layout = value.get("result_layout", "")
     for key in ("title", "audience"):
         if key in value and value[key] is not None and not isinstance(value[key], str):
@@ -116,6 +120,17 @@ def validate(value: object, root: Path | None = None, final: bool = False) -> tu
                     errors.append(f"{key}[{index}] needs name and version")
                 elif any(field in source and not isinstance(source[field], str) for field in ("source", "purpose")):
                     errors.append(f"{key}[{index}] source/purpose must be strings")
+    terminology = value.get("terminology_sources")
+    if terminology is not None:
+        if not isinstance(terminology, list):
+            errors.append("terminology_sources must be an array")
+        else:
+            for index, item in enumerate(terminology):
+                if isinstance(item, str):
+                    if not item.strip():
+                        errors.append(f"terminology_sources[{index}] must be non-empty")
+                elif not isinstance(item, dict) or not isinstance(item.get("name"), str) or not item["name"].strip():
+                    errors.append(f"terminology_sources[{index}] needs a name or non-empty string")
 
     targets = value.get("evidence_targets")
     if not isinstance(targets, list):
@@ -244,6 +259,8 @@ def validate(value: object, root: Path | None = None, final: bool = False) -> tu
                         errors.append(f"{item_label}.published must be boolean")
                     if not isinstance(item.get("purpose"), str) or not item["purpose"].strip():
                         errors.append(f"{item_label}.purpose must be a non-empty string")
+                    if "description" in item and not isinstance(item.get("description"), str):
+                        errors.append(f"{item_label}.description must be a string")
                     consumers = item.get("consumers")
                     if not isinstance(consumers, list) or not consumers or any(
                         not isinstance(consumer, str) or not consumer.strip() for consumer in consumers
@@ -251,6 +268,25 @@ def validate(value: object, root: Path | None = None, final: bool = False) -> tu
                         errors.append(f"{item_label}.consumers must be a non-empty string array")
                 elif item.get("kind") not in {"figure", "table"}:
                     errors.append(f"{item_label}.kind must be figure or table")
+                if field == "figure_table_refs" and item.get("caption_fields") is not None and not isinstance(item.get("caption_fields"), dict):
+                    errors.append(f"{item_label}.caption_fields must be an object")
+        notes = point.get("notes")
+        if notes is not None:
+            if not isinstance(notes, list):
+                errors.append(f"{label}.notes must be an array")
+            else:
+                for note_index, note in enumerate(notes):
+                    note_label = f"{label}.notes[{note_index}]"
+                    if not isinstance(note, dict):
+                        errors.append(f"{note_label} must be an object")
+                        continue
+                    for key in ("id", "text"):
+                        _string(note.get(key), f"{note_label}.{key}", errors)
+                    if note.get("kind") is not None and note.get("kind") not in {"direction", "unit", "boundary", "interpretation"}:
+                        errors.append(f"{note_label}.kind is invalid")
+                    for key, expected in (("border", "#5B9BD5"), ("fill", "#DDEBF7"), ("label_color", "#2F75B5")):
+                        if key in note and note[key] != expected:
+                            errors.append(f"{note_label}.{key} must be {expected}")
 
     if isinstance(targets, list) and points:
         known_points = point_ids

@@ -9,6 +9,7 @@
   "title": "示例分析结果",
   "audience": "项目研究人员",
   "evidence_pack": "analysis_evidence_pack.json",
+  "template": "report_templates/report_template.docx",
   "evidence_targets": [
     {"id": "ET-01", "title": "主要分析结果", "analysis_point_ids": ["AP-01"]}
   ],

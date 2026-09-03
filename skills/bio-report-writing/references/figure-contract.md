@@ -1,36 +1,56 @@
-# 图件、表格与 DOCX 合同
+# Figure、表格与 DOCX-first 合同
 
-## 图件
+本文件只定义媒体和表格的可见语义；事实来源、章节顺序和 Note 触发条件见
+[report-contract.md](report-contract.md)，字段锚点见 [slot-contract.md](slot-contract.md)。
 
-每个业务图在模板中固定为：
+## 图件顺序与 caption
+
+每个业务图在 `FIGURES` 锚点中固定为：
 
 ```text
-陈述式图题 → 一个完整源图/已独立发布 panel → 紧邻图注 → 正文解释
+连续编号的陈述式图题 → 一张完整真实源图 → 紧邻、自足、编号图注 → 正文解释
 ```
 
-renderer 只嵌入当前发布树的真实 PNG/JPEG（或目标引擎明确支持的完整矢量图）；不临时重画，
-也不从 PDF 截图冒充源图。图注由显式 slot 组装，至少说明对象、比较/分组、panel、轴和
-单位/变换、颜色/形状/线型、n 或统计层级、阈值和阅读边界，顺序与源图一致。
+一个 composite source 对应一个 drawing；源图已有 panel 时在同一图注内按源顺序说明 panel。caption
+必须由 renderer 的固定函数组装，至少覆盖：
 
-单一 composite source 对应一个 drawing。按源宽高比缩放，DOCX 内不得出现非零 OOXML
-`a:srcRect`，不得裁剪、竖切为续图或拉伸。宽图通过源端重排、增大画布、横向页面或独立
-发布 panel 解决；图题/整图/图注用 keep-with-next/keep-lines 保持邻接。
+| 字段 | 说明 |
+|---|---|
+| `object` | 数据对象、特征或队列 |
+| `comparison` / `groups` | target/reference、分组和方向 |
+| `panel` | panel 数量、顺序和各 panel 内容 |
+| `axes` / `units` | 坐标、单位和变换（如 log、Z-score） |
+| `encoding` | 颜色、形状、线型及其通俗语义 |
+| `n` / `statistics` | 样本/特征数、统计单位和统计层级 |
+| `threshold` / `boundary` | 筛选阈值、阅读边界和不能推断的含义 |
 
-## 表格
+值必须来自 plot provenance、结果表或 evidence pack；不从 PNG/PDF 外观、OCR 或文件名补齐。图题、图注、
+正文中的对象、方向、数字和颜色语义必须与同一事实链一致。
 
-renderer 在固定 slot 读取已验证结果表或显式 typed rows，并固定列、顺序、显示名、单位、
-精度和脚注。长表只展示合同声明的预览行并指向完整业务文件；不要靠任意 key-value loop
-决定列。表头跨页重复，行不可拆分，列宽在目标阅读器中可读。
+## 完整嵌图与格式
 
-输出文件表单独列业务文件 basename、内容与用途；报告、日志、cache、hash 和内部 provenance
-不进入表格。空结果按 `valid_no_findings` 的固定分支处理：声明为下游输入的表保留表头空表，
-不适用的图/章节整项省略，不生成假行或占位图。
+- 报告消费已发布 PNG/PDF（或合同明确支持的完整矢量源），不临时重画、不截屏、不用 PDF 截图冒充源图。
+- 源图完整等比嵌入；DOCX 不含非零 OOXML `a:srcRect`，不裁剪、竖切续图、拼接半图或拉伸。
+- 显示框与源图宽高比误差不超过 0.1%。宽图通过源端重排、增大画布、横向页面或独立完整 panel 解决，
+  不靠裁剪。
+- 图题、整图、图注用 keep-with-next/keep-lines 或等价布局保持相邻；不得让图题孤立在上一页、图注孤立在
+  下一页或跨页丢失语义。
+- PNG/PDF 是同一逻辑图的不同发布格式时，报告输出表合并为 `name.png(pdf)`；磁盘合同仍逐文件检查存在性、
+  尺寸、DPI、renderer 和字体 fallback。
 
-## 独立三门
+## 结果表与输出表
 
-1. **结构**：媒体、图/表 ID、文件、slot 和 caption 一一对应；
-2. **视觉**：无裁切、拉伸、重叠、tofu、空白页、孤立标题/图注或表格溢出；
-3. **证据**：图表中的对象、数量、方向、单位和结论由结构化结果支持。
+`RESULT_TABLE` 由固定列定义和 typed rows 生成：列顺序、显示名、单位、精度、脚注固定；文本列左对齐，
+数值列右对齐，表头跨页重复，单条数据行不拆页。长结果只展示合同声明的预览行（例如前 10 行），完整
+业务表在 `OUTPUT_TABLE` 指向。
 
-PNG/PDF 记录物理尺寸、DPI、renderer 与字体 fallback；像素/DPI/hash 不能替代目标阅读器
-逐页检查。完整 release 门见 [acceptance.md](acceptance.md)。
+`OUTPUT_TABLE` 每行对应读者可取得的业务文件，显示 basename、内容、用途和消费者。报告、模板、日志、cache、
+hash、run record、QA 和治理状态不占行；没有消费者的 filtered/top/gene-list 副本不生成也不列出。
+
+## 三道独立门
+
+1. **结构门**：Figure/Table ID、源文件、caption、slot 和输出记录一一对应，条件产物与状态一致；
+2. **视觉门**：无裁剪、拉伸、重叠、tofu、空白页、孤立标题/图注、表格溢出或不可读字号；
+3. **证据门**：对象、数量、方向、单位、阈值、统计和结论都能由结构化结果支持。
+
+机器结构检查不能替代目标阅读器逐页检查，也不能用像素、DPI 或 hash 代替语义证据。

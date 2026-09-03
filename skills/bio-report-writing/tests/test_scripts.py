@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import base64
 from pathlib import Path
 import subprocess
 import sys
@@ -219,6 +220,116 @@ class ReportSkillSmoke(unittest.TestCase):
             result = run("validate_report_contract.py", "--plan", str(plan), "--evidence-pack", str(evidence), "--root", str(root))
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("relative", result.stderr)
+
+    def test_docx_template_asset_contains_styled_note(self) -> None:
+        result = run("validate_docx_structure.py", str(ROOT / "assets" / "report_template.docx"), "--json")
+        self.assertNotEqual(result.returncode, 0, result.stderr)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["note_callouts"], 1)
+        self.assertEqual(payload["note_style_issues"], [])
+        self.assertIn("[[NOTE:DIRECTION]]", payload["template_markers"])
+
+    def test_docx_template_renderer_fills_note_tables_and_figure(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "result").mkdir()
+            (root / "result" / "01.tsv").write_text("name\tvalue\nN\t4\n", encoding="utf-8")
+            # A tiny valid PNG keeps this test independent of a plotting stack.
+            png = base64.b64decode(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+            )
+            (root / "result" / "01.png").write_bytes(png)
+            values = {
+                "quality_profile": "release",
+                "slots": {
+                    "REPORT_TITLE": "测试报告",
+                    "REPORT_AUDIENCE": "研究人员",
+                    "REPORT_SUMMARY": "摘要事实",
+                    "ANALYSIS_SCOPE": "供体级样本",
+                    "ANALYSIS_METHOD": "limma 3.58；FDR 0.05",
+                    "ANALYSIS_QC": "样本顺序已核对",
+                    "QC.CONDITION": "",
+                    "ANALYSIS_RESULT": "观察到 4 个结果",
+                    "RESULTS.CONDITION": "有结果",
+                    "NOTE:DIRECTION": {"kind": "direction", "text": "logFC = case − control；正值表示 case 较高。"},
+                    "RESULT_TABLE_ROWS": {"caption": "结果预览", "rows": [["N", 4, "gene", "result/01.tsv"]]},
+                    "TABLE:RESULTS": "",
+                    "ANALYSIS_CONCLUSION": "该结果为描述性证据",
+                    "FIGURES.CONDITION": "有图",
+                    "FIGURE:F1.TITLE": "差异表达火山图",
+                    "FIGURE:F1.SOURCE": "result/01.png",
+                    "FIGURE:F1.CAPTION": "图示供体级差异表达及比较方向。",
+                    "FIGURE:F1.CAPTION_FIELDS": "对象；分组；轴和单位；统计层级；阈值；边界",
+                    "ANALYSIS_LIMITATIONS": "样本量和外部验证范围有限",
+                    "OUTPUTS_INTRO": "公开业务文件如下。",
+                    "OUTPUT_TABLE_ROWS": {"caption": "公开文件", "rows": [["result/01.tsv", "table", "结果表", "复核", "研究人员"]]},
+                    "TABLE:OUTPUTS": "",
+                    "REFERENCES": "limma 官方文档",
+                    "VERSION_TABLE_ROWS": {"caption": "软件与资源版本", "rows": [["R", "4.3.0", "计算"]]},
+                    "TABLE:VERSIONS": "",
+                },
+            }
+            values_file = root / "values.json"
+            values_file.write_text(json.dumps(values, ensure_ascii=False), encoding="utf-8")
+            output = root / "report.docx"
+            result = run(
+                "render_docx_template.py",
+                "--template", str(ROOT / "assets" / "report_template.docx"),
+                "--values", str(values_file), "--root", str(root), "--output", str(output),
+                "--final", "--require-note", "--json",
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "PASS")
+            self.assertEqual(payload["unresolved"], [])
+            checked = run("validate_docx_structure.py", str(output), "--final", "--require-note", "--json")
+            self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
+            rendered = json.loads(checked.stdout)
+            self.assertEqual(rendered["drawings"], 1)
+            self.assertEqual(rendered["note_style_issues"], [])
+            document_text = "\n".join(
+                [paragraph.text for paragraph in __import__("docx").Document(output).paragraphs]
+            )
+            self.assertNotIn("[[", document_text)
+            self.assertNotIn("条件图件", document_text)
+            self.assertNotIn("图注字段（由 renderer", document_text)
+            self.assertNotIn("TRUE", document_text)
+
+    def test_docx_template_renderer_removes_optional_qc_note_and_figures(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            values = {
+                "slots": {
+                    "REPORT_TITLE": "简版报告",
+                    "REPORT_AUDIENCE": "研究人员",
+                    "REPORT_SUMMARY": "结果摘要",
+                    "ANALYSIS_SCOPE": "样本范围",
+                    "ANALYSIS_METHOD": "方法与参数",
+                    "ANALYSIS_RESULT": "结果段",
+                    "ANALYSIS_CONCLUSION": "结论",
+                    "ANALYSIS_LIMITATIONS": "限制",
+                    "OUTPUTS_INTRO": "公开文件",
+                    "REFERENCES": "实际来源",
+                    "RESULT_TABLE_ROWS": [],
+                    "OUTPUT_TABLE_ROWS": [],
+                    "VERSION_TABLE_ROWS": [],
+                }
+            }
+            values_file = root / "values.json"
+            values_file.write_text(json.dumps(values, ensure_ascii=False), encoding="utf-8")
+            output = root / "report.docx"
+            result = run(
+                "render_docx_template.py",
+                "--template", str(ROOT / "assets" / "report_template.docx"),
+                "--values", str(values_file), "--root", str(root), "--output", str(output), "--json",
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('"status": "DRAFT"', result.stdout)
+            document = __import__("docx").Document(output)
+            text = "\n".join(paragraph.text for paragraph in document.paragraphs)
+            self.assertNotIn("质控与异常", text)
+            self.assertNotIn("图件", text)
+            self.assertEqual(len(document.tables), 3)  # result/output/version; Note is conditional
 
 
 if __name__ == "__main__":

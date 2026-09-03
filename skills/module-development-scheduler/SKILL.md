@@ -15,7 +15,7 @@ description: 为生信模块开发任务生成确定的阶段路由、领域 ski
 
 1. 识别模块、任务类型、批准状态、当前阶段和实际变更路径。
 2. 选择唯一 Matt 路径：未形成 SPEC 时回到 planning；单次 SPEC READY 走 Fork/spec-executor；跨会话 frontier 走 Goal/executor；缺少权限或决策时返回 `BLOCKED`。
-3. 依据变更面加载领域适配器：源码/配置/算法/绘图加载 `bio-code-standard`；报告/图注/DOCX/结果解释加载 `bio-report-writing`；公开 full 同时加载两者。代码任务的 `source_review` 永远排在 `analysis_coder` 之前；同时有报告时 `report_coder` 在其后。
+3. 先确定 `execution_scope=report-only|plot|full`：纯报告内容/版式只走 report-only，纯作图且不改科学结果走 plot，计算/科学逻辑/配置/合同/输出结构走 full。再依据变更面加载领域适配器；代码任务的 `source_review` 永远排在 coder 之前，同时有报告时 `report_coder` 在其后。
 4. 输出 `route_plan.json`，包含 route、phase、development-plan 映射、quality/effort profile、round counters、leaf adapters、required_checks 和 blocked_reasons；执行、review、commit 和 receipt 仍由 Matt executor 完成。
 5. 在每个 hook 只推进一个 frontier；领域 skill 返回 `PASS`、`EVIDENCE_NEEDED` 或 `BLOCKED`，调度器负责传回，不替领域做判断。
 
@@ -27,6 +27,7 @@ description: 为生信模块开发任务生成确定的阶段路由、领域 ski
 
 `mechanical` 档只按 `required_checks` 路由，不允许模型临时增加检查、文件、依赖或安全边界；
 `scientific_review` 必须由 scope 明确选择，发现歧义时返回具体 `EVIDENCE_NEEDED`，不自行改路由。
+变更路径无法明确归入三档时，路由直接 `BLOCKED`，要求调用者显式传入 `--execution-scope`；不要靠文件名猜测科学影响。
 
 ## Tight loop（固定完成判据）
 

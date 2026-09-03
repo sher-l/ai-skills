@@ -12,6 +12,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import re
 import tempfile
 from typing import Any
 
@@ -22,6 +23,21 @@ TASK_TYPES = {"new", "migrate", "optimize", "substantial_change", "review"}
 PHASES = {"scope", "build", "draft", "finish"}
 WORK_KINDS = {"auto", "code", "report", "both", "review"}
 REPORT_CONTEXTS = {"none", "one_off", "module_reusable"}
+EXECUTION_SCOPES = {"report-only", "plot", "full"}
+PLOT_HINTS = {"plot", "figure", "figures", "visual", "renderer", "render", "ggplot", "draw"}
+FULL_HINTS = {
+    "calculate",
+    "analysis",
+    "scientific",
+    "config",
+    "contract",
+    "schema",
+    "output",
+    "result",
+    "model",
+    "stat",
+    "input",
+}
 ENTRY_SKILL = "develop-module"
 SCHEDULER_SKILL = "module-development-scheduler"
 CODE_SKILL = "bio-code-standard"
@@ -36,6 +52,36 @@ def _normalise_report_context(value: str | None, report: bool) -> str:
         return "module_reusable" if report else "none"
     normalised = value.strip().lower().replace("-", "_")
     return normalised
+
+
+def _normalise_execution_scope(value: str | None) -> str | None:
+    if value is None or value in {"", "auto"}:
+        return None
+    normalised = value.strip().lower().replace("_", "-")
+    aliases = {"report": "report-only", "report-only": "report-only", "plot-only": "plot", "full": "full"}
+    return aliases.get(normalised, normalised)
+
+
+def _infer_execution_scope(
+    explicit: str | None,
+    work_kind: str,
+    code: bool,
+    report: bool,
+    paths: list[str],
+) -> str:
+    """Choose the smallest explicit execution boundary from declared paths."""
+    normalised = _normalise_execution_scope(explicit)
+    if normalised is not None:
+        return normalised
+    if work_kind == "report" or (report and not code):
+        return "report-only"
+    lowered = [path.lower() for path in paths]
+    joined = " ".join(lowered)
+    has_plot = any(token in joined for token in PLOT_HINTS)
+    has_full = any(token in joined for token in FULL_HINTS)
+    if code and has_plot and not has_full:
+        return "plot"
+    return "full"
 
 
 def _as_bool(value: bool | None, default: bool) -> bool:
@@ -101,6 +147,7 @@ def infer(
     module: str | None = None,
     full_required: bool | None = None,
     review_required: bool | None = None,
+    execution_scope: str | None = None,
 ) -> dict[str, Any]:
     """Return one deterministic route plan.
 
@@ -132,13 +179,35 @@ def infer(
     if work_kind == "both":
         code = report = True
 
+    explicit_scope = _normalise_execution_scope(execution_scope)
+    joined_paths = " ".join(path.lower() for path in paths)
+    report_surface = bool(paths) and all(
+        any(token in path.lower() for token in REPORT_HINTS)
+        for path in paths
+    ) and not any(token in joined_paths for token in FULL_HINTS | PLOT_HINTS)
+    if report_surface and work_kind in {"auto", "review"}:
+        code, report = False, True
+    if explicit_scope == "report-only":
+        # The explicit scope is authoritative for a report edit.  A report
+        # renderer may itself be an R/Python file, so the suffix alone does
+        # not turn this into scientific code work.
+        if not any(token in joined_paths for token in FULL_HINTS | PLOT_HINTS):
+            code, report = False, True
+    elif explicit_scope == "plot":
+        code = True
+        report = report or has_report
     context = _normalise_report_context(report_context, report)
+    scope = _infer_execution_scope(execution_scope, work_kind, code, report, paths)
     blockers: list[str] = []
     if not task_type or task_type not in TASK_TYPES:
         blockers.append("task_type must be one of new/migrate/optimize/substantial_change/review")
     if not phase or phase not in PHASES:
         blockers.append("phase must be one of scope/build/draft/finish")
-    if not paths and task_type in {"migrate", "optimize", "substantial_change", "review"}:
+    if (
+        not paths
+        and explicit_scope is None
+        and task_type in {"migrate", "optimize", "substantial_change", "review"}
+    ):
         blockers.append("changed paths or an explicit scope are required")
     if work_kind not in WORK_KINDS:
         blockers.append("work_kind must be auto, code, report, both, or review")
@@ -148,6 +217,22 @@ def infer(
         blockers.append("report work requires report_context one_off or module_reusable")
     if context != "none" and not report:
         blockers.append("report_context is only valid for report work")
+    if scope not in EXECUTION_SCOPES:
+        blockers.append("execution_scope must be report-only, plot, or full")
+    if explicit_scope is None and paths and not report_surface:
+        lowered_tokens = set(re.findall(r"[a-z0-9]+", joined_paths))
+        clear_plot = bool(lowered_tokens & PLOT_HINTS)
+        clear_full = bool(lowered_tokens & FULL_HINTS)
+        if code and not clear_plot and not clear_full:
+            blockers.append("execution_scope is ambiguous; pass --execution-scope report-only, plot, or full")
+    if scope == "report-only" and code:
+        blockers.append("execution_scope=report-only cannot include code work")
+    if scope == "report-only" and not report:
+        blockers.append("execution_scope=report-only requires report work")
+    if scope == "plot" and not code:
+        blockers.append("execution_scope=plot requires plotting/code work")
+    if scope == "full" and not code and task_type != "review":
+        blockers.append("execution_scope=full requires calculation/scientific code work")
     if single_session and multi_session:
         blockers.append("single_session and multi_session cannot both be selected")
     if not isinstance(max_repair_rounds, int) or not 0 <= max_repair_rounds <= 2:
@@ -201,8 +286,13 @@ def infer(
     if code:
         # Source review is deliberately first; report work can only consume a
         # code evidence pack after this hook has completed.
-        checks.extend(["source_review", "code_contract", "analysis_evidence_pack"])
-        execution_order.extend(["source_review", "analysis_coder"])
+        checks.extend(["source_review", "code_contract"])
+        if scope == "full":
+            checks.append("analysis_evidence_pack")
+            execution_order.extend(["source_review", "analysis_coder"])
+        else:  # plot: no scientific result/evidence recomputation
+            checks.append("figure_manifest")
+            execution_order.extend(["source_review", "plot_coder"])
     if report:
         checks.extend(["report_contract", "figure_manifest", "docx_structure"])
         execution_order.append("report_coder")
@@ -230,6 +320,7 @@ def infer(
         "module": "",
         "task_type": task_type,
         "work_kind": work_kind,
+        "execution_scope": scope,
         "report_context": context,
         "quality_profile": quality_profile,
         "effort_profile": effort_profile,
@@ -279,6 +370,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--multi-session", action="store_true")
     parser.add_argument("--phase", required=True)
     parser.add_argument("--work-kind", choices=sorted(WORK_KINDS), default="auto")
+    parser.add_argument(
+        "--execution-scope",
+        "--scope",
+        dest="execution_scope",
+        choices=("report-only", "report_only", "report", "plot", "full", "auto"),
+        help="执行边界：report-only、plot 或 full；省略时按任务面保守推断",
+    )
     parser.add_argument("--quality-profile", choices=("draft", "release"), default="draft")
     parser.add_argument("--effort-profile", choices=("mechanical", "scientific_review"), default="mechanical")
     parser.add_argument("--max-repair-rounds", type=int, choices=(0, 1, 2), default=2)
@@ -326,6 +424,7 @@ def main(argv: list[str] | None = None) -> int:
         max_checkpoint_rounds=args.max_checkpoint_rounds,
         max_regression_rounds=args.max_regression_rounds,
         module=args.module,
+        execution_scope=args.execution_scope,
     )
     result["module"] = args.module
     payload = json.dumps(result, ensure_ascii=False, indent=2) + "\n"

@@ -34,7 +34,7 @@ window.AI_SKILLS = [
     cat: "bio",
     catLabel: "生信分析",
     status: "stable",
-    tags: ["R", "Python", "source-review", "statistics", "provenance"],
+    tags: ["R", "Python", "source-review", "statistics", "provenance", "v2.2"],
     repo: "https://github.com/sher-l/ai-skills/tree/main/skills/bio-code-standard",
     zh: {
       t: "生信分析代码规范",
@@ -49,11 +49,11 @@ window.AI_SKILLS = [
     name: "bio-report-writing",
     cat: "bio",
     status: "stable",
-    tags: ["report-coder", "QMD", "DOCX", "captions", "QA"],
+    tags: ["report-coder", "DOCX", "template", "captions", "QA"],
     repo: "https://github.com/sher-l/ai-skills/tree/main/skills/bio-report-writing",
     zh: {
       t: "生信报告 coder",
-      d: "编写可复用的报告模板与 R/Python renderer，插入真实表格和图件，生成图注并完成 DOCX/视觉验收。"
+      d: "编写 DOCX-first 可复用报告模板与 R/Python renderer，插入真实表格和图件，生成图注并完成视觉验收。"
     },
     en: {
       t: "Bioinformatics report coder",
@@ -64,11 +64,11 @@ window.AI_SKILLS = [
     name: "module-development-scheduler",
     cat: "bio",
     status: "stable",
-    tags: ["routing", "Matt", "workflow", "gates"],
+    tags: ["routing", "Matt", "workflow", "gates", "report-only", "plot", "full"],
     repo: "https://github.com/sher-l/ai-skills/tree/main/skills/module-development-scheduler",
     zh: {
       t: "生信模块开发调度",
-      d: "把新建、迁移、优化和审查任务编译为确定的阶段、coder 顺序、领域门禁与唯一生命周期 owner。"
+      d: "把新建、迁移、优化和审查任务编译为确定的阶段、report-only/plot/full coder 顺序、领域门禁与唯一生命周期 owner。"
     },
     en: {
       t: "Module development scheduler",

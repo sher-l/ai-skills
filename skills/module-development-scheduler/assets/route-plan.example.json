@@ -3,6 +3,7 @@
   "module": "example_module",
   "task_type": "new",
   "work_kind": "both",
+  "execution_scope": "full",
   "report_context": "module_reusable",
   "quality_profile": "draft",
   "effort_profile": "mechanical",

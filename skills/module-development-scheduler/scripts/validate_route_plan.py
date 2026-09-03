@@ -19,6 +19,7 @@ CORE_REQUIRED = {
     "module",
     "task_type",
     "work_kind",
+    "execution_scope",
     "quality_profile",
     "effort_profile",
     "max_repair_rounds",
@@ -76,6 +77,12 @@ def validate(value: Any, subject: str) -> list[str]:
         errors.append("invalid task_type")
     if value.get("work_kind") not in WORK_KINDS:
         errors.append("invalid work_kind")
+    execution_scope = value.get("execution_scope")
+    if isinstance(execution_scope, str):
+        execution_scope = execution_scope.strip().lower().replace("_", "-")
+        execution_scope = {"report": "report-only", "report-only": "report-only"}.get(execution_scope, execution_scope)
+    if execution_scope not in {"report-only", "plot", "full"}:
+        errors.append("invalid execution_scope")
     report_context = value.get("report_context")
     if report_context is None:
         report_context = "module_reusable" if "bio-report-writing" in value.get("loaded_skills", []) else "none"
@@ -172,18 +179,31 @@ def validate(value: Any, subject: str) -> list[str]:
 
     code = isinstance(adapters, list) and "bio-code-standard" in adapters
     report = isinstance(adapters, list) and "bio-report-writing" in adapters
+    if execution_scope == "report-only" and code:
+        errors.append("report-only scope cannot load bio-code-standard")
+    if execution_scope == "report-only" and not report:
+        errors.append("report-only scope requires bio-report-writing")
+    if execution_scope == "plot" and not code:
+        errors.append("plot scope requires bio-code-standard")
+    if execution_scope == "full" and not code and value.get("task_type") != "review":
+        errors.append("full scope requires bio-code-standard")
     if report_context == "none" and report:
         errors.append("report adapter requires a report_context")
     if report_context in {"one_off", "module_reusable"} and not report:
         errors.append("report_context requires bio-report-writing")
-    expected_order = (["source_review", "analysis_coder"] if code else []) + (["report_coder"] if report else [])
+    coder = "plot_coder" if execution_scope == "plot" else "analysis_coder"
+    expected_order = (["source_review", coder] if code else []) + (["report_coder"] if report else [])
     if "execution_order" in value and isinstance(order, list) and order != expected_order:
-        errors.append("execution_order must put source_review before analysis_coder before report_coder")
+        errors.append("execution_order must match the declared execution_scope and coder order")
     expected_coders = [item for item in expected_order if item.endswith("_coder")]
     if "coder_order" in value and isinstance(coder_order, list) and coder_order != expected_coders:
         errors.append("coder_order does not match execution_order")
     if code and isinstance(checks, list):
-        for check in ("source_review", "code_contract", "analysis_evidence_pack"):
+        required_code_checks = ["source_review", "code_contract"]
+        required_code_checks.append(
+            "figure_manifest" if execution_scope == "plot" else "analysis_evidence_pack"
+        )
+        for check in required_code_checks:
             if check not in checks:
                 errors.append(f"code work missing required check: {check}")
         if all(check in checks for check in ("source_review", "code_contract")) and checks.index("source_review") > checks.index("code_contract"):

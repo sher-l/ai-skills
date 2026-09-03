@@ -11,6 +11,7 @@ import build_docx
 import build_report_skeleton
 import create_style_reference
 import init_report_plan
+import render_docx_template
 import validate_docx_structure
 import validate_report_contract
 
@@ -22,6 +23,7 @@ COMMANDS = {
     "build": build_docx.main,
     "docx": validate_docx_structure.main,
     "style": create_style_reference.main,
+    "render-template": render_docx_template.main,
 }
 
 
@@ -57,10 +59,6 @@ def run_pipeline(argv: list[str]) -> int:
         [sys.executable, str(script_dir / "build_docx.py"), "--plan", str(plan), "--evidence-pack", str(args.evidence_pack), "--output", str(docx), "--root", str(root)],
         [sys.executable, str(script_dir / "validate_docx_structure.py"), str(docx)],
     ]
-    if args.final:
-        steps[2].extend(["--markdown", str(markdown), "--final", "--root", str(root)])
-        steps[3].append("--final")
-        steps[4].append("--final")
     for command in steps:
         result = subprocess.run(command, text=True, capture_output=True, check=False)
         if result.stdout:

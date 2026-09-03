@@ -4,7 +4,8 @@
 
 在线页面：<https://sher-l.github.io/ai-skills/>
 
-板块会随技能沉淀逐步细分（生信分析会是其中之一）。
+当前生信 skill 按 v2.2 规范发布：代码 coder、DOCX-first 报告 coder 和模块调度器彼此独立；secure_dev 的
+`develop-module` 负责把它们组合到同一个生命周期。
 
 ## 页面维护
 

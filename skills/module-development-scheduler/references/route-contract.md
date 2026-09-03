@@ -18,8 +18,9 @@
 
 - `scope`：确认模块、目标、输入、非目标和所需领域适配器；代码任务先做
   `source_review`，再进入分析 coder；
-- `build`：只推进当前 frontier，按 `source_review → analysis_coder → report_coder`
-  顺序登记代码/报告证据；
+- `build`：只推进当前 frontier；`full` 按 `source_review → analysis_coder → report_coder`，
+  `plot` 按 `source_review → plot_coder → report_coder`，`report-only` 只走
+  `report_coder`；
 - `draft`：代码和报告草稿都通过各自 validator，缺证据保持 `EVIDENCE_NEEDED`；
 - `finish`：仅当 route plan 声明 `requires_review`/`requires_full` 时加入相应
   独立 review、测试或 full 检查；领域 skill 只提供验收谓词。
@@ -33,3 +34,7 @@
 `report_context` 可为 `one_off` 或 `module_reusable`；两者使用同一报告合同和
 检查集合，区别只记录上下文的复用范围。finish 的独立 review/full 要求由
 route plan 的 `finish_policy` 明确声明，不从“报告”一词臆测。
+
+`execution_scope` 是能力边界而非生命周期：`report-only` 仅改报告正文/图题/图注/DOCX
+版式，`plot` 仅改作图实现且不改科学结果，`full` 覆盖计算、科学逻辑、配置、合同或
+输出结构。省略时按路径保守推断，无法确定时应由调用者显式指定。

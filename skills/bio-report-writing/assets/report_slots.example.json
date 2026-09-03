@@ -1,9 +1,35 @@
 {
   "schema_version": "0.1.0",
+  "template": {
+    "format": "docx",
+    "file": "report_template.docx",
+    "anchor": "bookmark",
+    "marker_syntax": "[[...]]",
+    "slots": {
+      "report.title": "slot_report_title / [[REPORT_TITLE]]",
+      "report.audience": "slot_report_audience / [[REPORT_AUDIENCE]]",
+      "report.summary": "slot_report_summary / [[REPORT_SUMMARY]]",
+      "analysis.scope": "slot_analysis_scope / [[ANALYSIS_SCOPE]]",
+      "analysis.method": "slot_analysis_method / [[ANALYSIS_METHOD]]",
+      "analysis.qc": "slot_analysis_qc / [[ANALYSIS_QC]]",
+      "analysis.result": "slot_analysis_result / [[ANALYSIS_RESULT]]",
+      "analysis.conclusion": "slot_analysis_conclusion / [[ANALYSIS_CONCLUSION]]",
+      "analysis.limitations": "slot_analysis_limitations / [[ANALYSIS_LIMITATIONS]]",
+      "notes.direction": "slot_note_direction / [[NOTE:DIRECTION]]",
+      "table.results": "slot_table_results_caption / [[TABLE:RESULTS.CAPTION]]",
+      "figure.F1.source": "slot_figure_f1_source / [[FIGURE:F1.SOURCE]]",
+      "figure.F1.caption": "slot_figure_f1_caption / [[FIGURE:F1.CAPTION]]",
+      "table.outputs": "slot_table_outputs_caption / [[TABLE:OUTPUTS.CAPTION]]",
+      "references": "slot_references / [[REFERENCES]]",
+      "table.versions": "slot_table_versions_caption / [[TABLE:VERSIONS.CAPTION]]"
+    }
+  },
   "fixed": {
     "sections": ["summary", "scope", "methods", "qc", "results", "conclusion", "limitations", "outputs", "references", "versions"],
-    "prose_owner": "report_template.qmd",
-    "caption_style": "declarative"
+    "prose_owner": "report_template.docx",
+    "caption_style": "declarative",
+    "figure_order": "published order; clone the complete F1 title/image/caption block for F2..Fn",
+    "last_visible_block": "table.versions"
   },
   "dynamic": {
     "title": {"type": "string", "source": "pack.title", "required": true},
@@ -20,8 +46,33 @@
     "figure.F1": {
       "type": "figure",
       "source": "analysis_points[].figure_table_refs[]",
-      "fields": ["id", "path", "object", "groups", "axes", "units", "legend", "n", "boundary"],
+      "fields": ["id", "path", "title", "caption", "caption_fields", "object", "comparison", "groups", "panel", "axes", "units", "encoding", "statistics", "threshold", "n", "boundary"],
       "condition": "published"
+    },
+    "notes": {
+      "type": "note[]",
+      "source": "analysis_points[].notes[]",
+      "fields": ["id", "title", "text", "kind", "border", "fill", "label_color"],
+      "default_style": {"border": "#5B9BD5", "fill": "#DDEBF7", "label_color": "#2F75B5"},
+      "condition": "non-empty semantic boundary"
+    },
+    "result_table": {
+      "type": "table",
+      "source": "analysis_points[].results[]",
+      "fields": ["caption", "columns", "rows", "align", "units", "precision", "source"],
+      "condition": "published rows"
+    },
+    "output_table": {
+      "type": "table",
+      "source": "analysis_points[].outputs[]",
+      "fields": ["id", "path", "kind", "description", "purpose", "consumers"],
+      "condition": "published files"
+    },
+    "version_table": {
+      "type": "table",
+      "source": "pack.versions[]",
+      "fields": ["name", "version", "purpose", "source"],
+      "condition": "used software/resources"
     }
   },
   "empty_policy": "EVIDENCE_NEEDED for required slots; omit a whole conditional artifact with a recorded reason"

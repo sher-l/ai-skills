@@ -20,6 +20,15 @@ python scripts/module_scheduler.py validate route_plan.json --json
 
 `--changed-path` 可以重复。优先提供 `--work-kind code|report|both|review`；未提供时才根据路径做保守推断。`new`、`migrate`、`optimize`、`substantial_change` 默认加载 code adapter，即使没有路径。报告上下文可选 `one-off` 或 `module-reusable`，两者检查完全相同。
 
+`execution_scope` 是低模型可直接遵循的执行边界：
+
+- `report-only`：仅报告正文、图题/图注或 DOCX 版式；只走 report coder；
+- `plot`：仅作图实现且不改科学结果；走 source review → plot coder，必要时再接 report coder；
+- `full`：计算/科学逻辑、配置、合同或输出结构变更；走完整分析 coder 链。
+
+可用 `--execution-scope`（`--scope`）显式指定；省略时仅对明确的路径模式做推断，
+无法判断时阻断并要求显式指定，不把不确定的能力偷偷升级为 `full`。
+
 ## 输出字段
 
 ```json
@@ -28,6 +37,7 @@ python scripts/module_scheduler.py validate route_plan.json --json
   "module": "demo",
   "task_type": "new",
   "work_kind": "both",
+  "execution_scope": "full",
   "report_context": "module_reusable",
   "quality_profile": "draft",
   "effort_profile": "mechanical",

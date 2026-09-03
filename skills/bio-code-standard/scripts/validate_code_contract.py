@@ -54,7 +54,7 @@ def validate_output_declarations(value: dict, errors: list[str], warnings: list[
                 (errors if final else warnings).append(message)
 
 
-def validate_contract(value: object) -> list[str]:
+def validate_contract(value: object, *, final: bool = False) -> list[str]:
     errors: list[str] = []
     if not isinstance(value, dict):
         return ["contract must be a JSON object"]
@@ -79,6 +79,8 @@ def validate_contract(value: object) -> list[str]:
         fail(errors, "max_repair_rounds must be an integer from 0 to 2")
     if value.get("result_layout") not in {"flat", "module_contract"}:
         fail(errors, "result_layout must be flat or module_contract")
+    if final and value.get("result_layout") != "flat":
+        fail(errors, "release result_layout must be flat; migrate the historical module_contract layout first")
     for key in ("module", "description", "canonical_source", "evidence_pack"):
         if not isinstance(value.get(key), str) or not value[key].strip():
             fail(errors, f"{key} must be a non-empty string")
@@ -296,7 +298,7 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, json.JSONDecodeError) as exc:
         errors.append(f"cannot read contract: {exc}")
         value = None
-    errors.extend(validate_contract(value))
+    errors.extend(validate_contract(value, final=args.final))
     if isinstance(value, dict):
         validate_output_declarations(value, errors, warnings, final=args.final)
     if contains_placeholder(value):

@@ -1,43 +1,29 @@
 #!/usr/bin/env Rscript
-# Copy into MODULE/scripts/report/generate_report.R and replace the named slots.
+# DOCX-first report renderer example.
+# Copy this file and scripts/render_docx_template.py into a module.  Replace
+# the default pack-to-slot mapping when the module has several analysis points;
+# keep the mapping explicit and let the shared helper fill report_template.docx.
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) != 4L) stop("usage: generate_report.R INPUT_ROOT PACK.json TEMPLATE_DIR OUTPUT_DIR")
 root <- normalizePath(args[[1L]], mustWork = TRUE)
-pack_file <- normalizePath(args[[2L]], mustWork = TRUE)
-template_dir <- normalizePath(args[[3L]], mustWork = TRUE)
+pack <- normalizePath(args[[2L]], mustWork = TRUE)
+template <- normalizePath(file.path(args[[3L]], "report_template.docx"), mustWork = TRUE)
 output <- normalizePath(args[[4L]], mustWork = FALSE)
-pack <- jsonlite::read_json(pack_file, simplifyVector = FALSE)
-point <- pack$analysis_points[[1L]]
-if (!identical(pack$quality_profile, "release") || length(point$limitations) == 0L)
-  stop("release report requires complete evidence")
-`%||%` <- function(x, y) if (is.null(x) || !length(x)) y else x
-safe <- function(rel) {
-  if (!is.character(rel) || length(rel) != 1L || grepl("^/|(^|/)[.][.](/|$)", rel))
-    stop("published paths must be relative and bounded")
-  path <- normalizePath(file.path(root, rel), mustWork = TRUE)
-  if (!startsWith(paste0(path, "/"), paste0(root, "/"))) stop("path escapes input root")
-  path
-}
-figure_ref <- if (length(point$figure_table_refs)) point$figure_table_refs[[1L]] else NULL
-params <- list(title = pack$title %||% "分析报告", summary = point$interpretation,
-  scope = point$scope, method_text = point$method$name,
-  result_text = paste(vapply(point$results, `[[`, "", "name"), collapse = "、"),
-  limitation_text = paste(point$limitations, collapse = "；"),
-  figure_path = if (is.null(figure_ref)) "" else safe(figure_ref$path),
-  figure_caption = if (is.null(figure_ref)) "" else figure_ref$caption %||% point$title,
-  table_caption = point$title,
-  output_text = paste(vapply(point$outputs, `[[`, "", "path"), collapse = "、"),
-  references_text = paste(vapply(pack$references %||% list(), `[[`, "", "name"), collapse = "；"),
-  versions_text = paste(vapply(pack$versions %||% list(), function(x) paste(x$name, x$version), character(1)), collapse = "；"),
-  table_rows = point$results)
+helper <- Sys.getenv("BIO_REPORT_TEMPLATE_HELPER", unset = "scripts/render_docx_template.py")
+if (!file.exists(helper)) stop("copy scripts/render_docx_template.py or set BIO_REPORT_TEMPLATE_HELPER")
 dir.create(output, recursive = TRUE, showWarnings = FALSE)
 work <- tempfile("report-render-"); dir.create(work)
 on.exit(unlink(work, recursive = TRUE, force = TRUE), add = TRUE)
-file.copy(file.path(template_dir, "report_template.qmd"), file.path(work, "report_template.qmd"))
-file.copy(file.path(template_dir, "reference.docx"), file.path(work, "reference.docx"))
-jsonlite::write_json(params, file.path(work, "params.json"), auto_unbox = TRUE)
-old_wd <- getwd(); setwd(work); on.exit(setwd(old_wd), add = TRUE, after = FALSE)
-status <- system2("quarto", c("render", "report_template.qmd", "--to", "docx",
-  "--execute-params", "params.json", "--output", "report.docx"))
-if (!identical(status, 0L)) stop("Quarto render failed")
-file.copy(file.path(work, "report.docx"), file.path(output, "MODULE_report.docx"), overwrite = TRUE)
+rendered <- file.path(work, "report.docx")
+status <- system2(Sys.getenv("PYTHON", unset = "python"), c(
+  helper, "--template", template, "--evidence-pack", pack,
+  "--root", root, "--output", rendered, "--final"
+))
+if (!identical(status, 0L)) stop("DOCX template rendering failed")
+pack_text <- paste(readLines(pack, warn = FALSE, encoding = "UTF-8"), collapse = " ")
+module_match <- regexec('"module"[[:space:]]*:[[:space:]]*"([^"]+)"', pack_text)
+module_id <- regmatches(pack_text, module_match)[[1L]][2L]
+if (is.na(module_id) || !nzchar(module_id)) stop("evidence pack module is required")
+destination <- file.path(output, paste0(module_id, "_report.docx"))
+if (!file.copy(rendered, destination, overwrite = TRUE)) stop("could not publish report")
+cat(destination, "\n")

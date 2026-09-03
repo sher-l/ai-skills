@@ -5,8 +5,9 @@ description: 为 R/Python 生物信息学 coder 提供 v2.2 的源码审查、ca
 
 # bio-code-standard v2.2
 
-这是代码层适配器。它输出可追溯的结构化表、图件、运行证据和
-`analysis_evidence_pack`；报告层另行消费这些事实。
+这是代码层适配器。它输出可追溯的结构化表、图件和运行证据，并把
+`analysis_evidence_pack` 作为开发/验证控制面的交接记录；报告层消费这些事实，
+不会把 evidence pack 当作 `result/` 业务文件。
 
 ## 固定顺序
 
@@ -29,7 +30,7 @@ description: 为 R/Python 生物信息学 coder 提供 v2.2 的源码审查、ca
    原始/校正 p、family、阈值和实际公式；过滤、去重、对齐、缺失和批次处理记录
    before/after 与 dropped 清单。
 6. 新建/重写模块的公开结果固定使用 `result/<NN>.<semantic_name>.<ext>` 单层布局
-   （`result_layout=flat`）；迁移旧模块先记录并审定既有路径，再单独完成接口迁移。plot 只读已发布表或声明的 cache，不重算科学结果；每个
+   （`result_layout=flat`）；迁移旧模块先记录并审定既有路径，再完成到同一平铺合同的接口迁移。plot 只读已发布表或声明的 cache，不重算科学结果；每个
    逻辑图绑定真实 source code、data source、run record、尺寸、DPI、字体、renderer、
    颜色语义和 PNG/PDF 输出。
 7. 交接时填写与报告侧兼容的 `analysis_evidence_pack`。它只保存机器事实和来源，不
@@ -51,7 +52,8 @@ python scripts/bio_code.py figure MODULE/.code-contract/figure_manifest.json --r
 
 `init`/scaffold 只产生 `DRAFT` 并退出 0；任何未完成的 validate 返回
 `EVIDENCE_NEEDED`（退出 2），冲突返回 `DECISION_REQUIRED`（退出 2），只有
-`quality_profile=release` 且 `--final` 全部通过才返回 `PASS`/0。
+`quality_profile=release` 且 `--final` 全部通过才返回 `PASS`/0；历史
+`module_contract` 布局只能在迁移审查阶段读取，不能作为 v2.2 发布布局。
 
 ## 按需读取
 

@@ -128,6 +128,7 @@ class RouteSmoke(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         value = json.loads(result.stdout)
+        self.assertEqual(value["execution_scope"], "full")
         self.assertEqual(value["execution_order"], ["source_review", "analysis_coder", "report_coder"])
         self.assertEqual(value["coder_order"], ["analysis_coder", "report_coder"])
 
@@ -178,6 +179,144 @@ class RouteSmoke(unittest.TestCase):
             )
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("owner", result.stderr)
+
+    def test_execution_scope_report_only_is_explicit_and_report_coder_only(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPT),
+                "--module",
+                "demo",
+                "--task-type",
+                "review",
+                "--phase",
+                "build",
+                "--execution-scope",
+                "report-only",
+                "--work-kind",
+                "report",
+            ],
+            text=True,
+            capture_output=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        value = json.loads(result.stdout)
+        self.assertEqual(value["execution_scope"], "report-only")
+        self.assertEqual(value["execution_order"], ["report_coder"])
+        self.assertNotIn("bio-code-standard", value["loaded_skills"])
+
+    def test_execution_scope_plot_uses_plot_coder_and_no_analysis_pack(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPT),
+                "--module",
+                "demo",
+                "--task-type",
+                "substantial_change",
+                "--phase",
+                "build",
+                "--changed-path",
+                "scripts/plot.R",
+                "--execution-scope",
+                "plot",
+            ],
+            text=True,
+            capture_output=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        value = json.loads(result.stdout)
+        self.assertEqual(value["execution_scope"], "plot")
+        self.assertEqual(value["execution_order"], ["source_review", "plot_coder"])
+        self.assertIn("figure_manifest", value["required_checks"])
+        self.assertNotIn("analysis_evidence_pack", value["required_checks"])
+
+    def test_plot_can_chain_report_coder_without_becoming_full(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPT),
+                "--module",
+                "demo",
+                "--task-type",
+                "new",
+                "--phase",
+                "build",
+                "--changed-path",
+                "scripts/plot.R",
+                "--has-report",
+            ],
+            text=True,
+            capture_output=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        value = json.loads(result.stdout)
+        self.assertEqual(value["execution_scope"], "plot")
+        self.assertEqual(value["execution_order"], ["source_review", "plot_coder", "report_coder"])
+        self.assertNotIn("analysis_evidence_pack", value["required_checks"])
+
+    def test_execution_scope_full_covers_scientific_surfaces(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPT),
+                "--module",
+                "demo",
+                "--task-type",
+                "optimize",
+                "--phase",
+                "build",
+                "--changed-path",
+                "scripts/calculate.R",
+                "--execution-scope",
+                "full",
+            ],
+            text=True,
+            capture_output=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        value = json.loads(result.stdout)
+        self.assertEqual(value["execution_scope"], "full")
+        self.assertEqual(value["execution_order"], ["source_review", "analysis_coder"])
+        self.assertIn("analysis_evidence_pack", value["required_checks"])
+
+    def test_ambiguous_path_requires_explicit_scope(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPT),
+                "--module", "demo",
+                "--task-type", "optimize",
+                "--phase", "build",
+                "--changed-path", "scripts/main.R",
+            ],
+            text=True,
+            capture_output=True,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        value = json.loads(result.stdout)
+        self.assertEqual(value["route"], "BLOCKED")
+        self.assertTrue(any("ambiguous" in item for item in value["blocked_reasons"]))
+
+    def test_explicit_report_scope_overrides_python_suffix(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPT),
+                "--module", "demo",
+                "--task-type", "review",
+                "--phase", "build",
+                "--work-kind", "both",
+                "--changed-path", "scripts/report.py",
+                "--execution-scope", "report-only",
+            ],
+            text=True,
+            capture_output=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        value = json.loads(result.stdout)
+        self.assertEqual(value["adapter_skills"], ["module-development-scheduler", "bio-report-writing"])
+        self.assertEqual(value["execution_order"], ["report_coder"])
 
 
 if __name__ == "__main__":

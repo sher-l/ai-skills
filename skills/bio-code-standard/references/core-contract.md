@@ -50,8 +50,8 @@
 
 - 新模块公开业务文件默认单层 `result/<NN>.<semantic_name>.<ext>`；表、模型和图共用
   该层，同一逻辑图的 PNG/PDF 仅改变扩展名。
-- 旧模块若必须嵌套，`result_layout=module_contract`，并在模块合同写明实际模式、理由、
-  消费者和迁移边界；脚本不能临时决定布局。`cache/` 只放真实下游消费者需要的对象。
+- 存量模块的嵌套路径只作为迁移输入记录；发布前迁移到同一平铺合同，脚本不能临时决定第二种布局。
+  `cache/` 只放真实下游消费者需要的对象。
 - 错误返回 `code/subject/evidence/supportedFixes`，保留 attempt、error 和部分状态；
   禁止静默 fallback、全局 warning 抑制、`setwd` 链和运行时依赖安装。
 - 成功发布前扫描绝对路径、占位符、任务句、乱码、错误指标标签和未声明输出；源代码

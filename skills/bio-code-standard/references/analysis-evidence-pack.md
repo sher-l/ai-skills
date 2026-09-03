@@ -1,6 +1,7 @@
 # analysis_evidence_pack v0.1 handoff
 
-这是 code 与 report adapter 之间的共享机器协议，不是运行时配置，也不是报告模板。
+这是 code 与 report adapter 之间的共享机器协议，不是运行时配置，也不是报告模板；它属于开发/验收控制面，
+不放入公开 `result/`，也不作为报告输出文件。
 代码层只写已经执行并能回溯的事实；报告层可在自己的合同中组织章节和自然语言。
 
 ## 最小字段
@@ -35,7 +36,7 @@
 ```
 
 新建或重写模块的 `result_layout` 固定为 `flat`，要求 `result/` 单层编号路径。
-迁移旧模块时可在审定记录中登记既有 `module_contract` 路径，但不能把它当作新输出的
+迁移旧模块时可在审定记录中登记既有 `module_contract` 路径，最终仍须迁移到平铺合同，不能把它当作新输出的
 另一套默认。`status` 使用 `complete`、`valid_no_findings`、
 `evidence_missing` 或 `blocked`；后两者可在 draft 暴露缺口，但 final 必须阻断。
 
