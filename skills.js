@@ -7,7 +7,7 @@
  *   name      技能目录名（等宽字体展示，如 bulk-rna-seq）
  *   cat       分类 id（自动汇总成筛选按钮，板块随技能沉淀逐步细分）
  *   catLabel  分类的显示名（同一 cat 只需写一次，之后可省略）
- *   status    stable | beta | draft（页面显示中文状态）
+ *   status    beta | draft | stable（页面显示中文状态）
  *   tags      工具/关键词标签，可省略
  *   repo      技能目录的链接，可省略
  *   zh / en   中英文标题（t）与描述（d）；只写 zh 也可以
@@ -19,7 +19,7 @@
  *     name: "bulk-rna-seq",
  *     cat: "bio",
  *     catLabel: "生信分析",
- *     status: "stable",
+ *     status: "beta",
  *     tags: ["DESeq2", "GSEA"],
  *     repo: "https://github.com/sher-l/ai-skills/tree/main/skills/bulk-rna-seq",
  *     zh: { t: "转录组差异分析", d: "DESeq2 差异表达、富集分析、预后矩阵制备。" },
@@ -38,7 +38,7 @@ window.AI_SKILLS = [
     repo: "https://github.com/sher-l/ai-skills/tree/main/skills/bio-code-standard",
     zh: {
       t: "生信分析代码规范",
-      d: "先核对官方定义、源码实现与真实执行证据，再规范 R/Python 计算、统计、绘图、配置和结果交接。"
+      d: "持续更新的 v2.2 代码规范：先核对官方定义、源码实现与真实执行证据，再规范 R/Python 计算、统计、绘图、配置和结果交接。"
     },
     en: {
       t: "Bioinformatics code standard",
@@ -53,7 +53,7 @@ window.AI_SKILLS = [
     repo: "https://github.com/sher-l/ai-skills/tree/main/skills/bio-report-writing",
     zh: {
       t: "生信报告 coder",
-      d: "编写 DOCX-first 可复用报告模板与 R/Python renderer，插入真实表格和图件，生成图注并完成视觉验收。"
+      d: "持续更新的 v2.2 报告 coder：编写 DOCX-first 可复用模板与 R/Python renderer，插入真实表格和图件，生成图注并完成验收。"
     },
     en: {
       t: "Bioinformatics report coder",
@@ -68,7 +68,7 @@ window.AI_SKILLS = [
     repo: "https://github.com/sher-l/ai-skills/tree/main/skills/module-development-scheduler",
     zh: {
       t: "生信模块开发调度",
-      d: "把新建、迁移、优化和审查任务编译为确定的阶段、report-only/plot/full coder 顺序、领域门禁与唯一生命周期 owner。"
+      d: "持续更新的 v2.2 调度器：把新建、迁移、优化和审查任务编译为确定的阶段、report-only/plot/full coder 顺序、领域门禁与唯一生命周期 owner。"
     },
     en: {
       t: "Module development scheduler",
