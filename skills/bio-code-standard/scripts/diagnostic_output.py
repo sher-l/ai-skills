@@ -31,7 +31,13 @@ def classify(message: str, domain: str = "runtime") -> str:
         return "DEPENDENCY_ERROR"
     if text.startswith("cannot read") or text.startswith("invalid json"):
         return "INPUT_ERROR"
+    if domain == "contract":
+        return "CONFIG_ERROR"
+    if domain == "evidence":
+        return "EVIDENCE_ERROR"
     if domain == "figure":
+        if any(word in text for word in ("unknown field", "must be", "unsupported", "schema", "format", "provenance")):
+            return "CONFIG_ERROR"
         return "OUTPUT_ERROR"
     if any(word in text for word in ("cannot read", "does not exist", "not found", "file", "path")):
         return "INPUT_ERROR"
