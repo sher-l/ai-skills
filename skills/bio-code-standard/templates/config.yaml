@@ -1,4 +1,4 @@
-# Human-readable starter configuration. Resolve relative paths from this file.
+# 面向人和 AI 的起始配置；所有相对路径均以本文件所在目录为基准解析。
 module: example_module
 description: "用一句话说明模块分析对象、主要方法和公开产物"
 input:

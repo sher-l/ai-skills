@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Minimal Python stage boundary; insert only the approved scientific logic."""
+"""最小 Python 阶段边界；这里只填写已批准的科学逻辑。"""
 from __future__ import annotations
 
 import argparse
@@ -7,16 +7,14 @@ from pathlib import Path
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run one declared bioinformatics stage.")
-    parser.add_argument("config", type=Path, help="configuration file")
+    parser = argparse.ArgumentParser(description="运行一个已声明的生物信息学阶段。")
+    parser.add_argument("config", type=Path, help="配置文件")
     args = parser.parse_args()
     config = args.config.resolve(strict=True)
     config_dir = config.parent
-    # Set the contract's frozen seed here after it has been approved; do not
-    # derive a scientific seed from today's date or a process-global default.
-    # Validate artifact identity, fields, units, direction and non-degenerate
-    # conditions before importing or running the scientific core.
-    raise SystemExit("EVIDENCE_NEEDED: implement the approved scientific stage")
+    # 合同批准固定随机种子后在这里设置；不得用当天日期或进程级默认值推导科学随机种子。
+    # 导入或运行 Scientific Core 前，先校验产物身份、字段、单位、方向和非退化条件。
+    raise SystemExit("EVIDENCE_NEEDED：请实现已批准的科学阶段")
 
 
 if __name__ == "__main__":

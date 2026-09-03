@@ -24,6 +24,9 @@ python scripts/bio_code.py figure MODULE/.code-contract/figure_manifest.json --r
 `quality_profile=release` 的最终检查可以 PASS。所有脚本只用 Python 标准库，运行时不安装
 R/Python 依赖。
 
+新写或修改的 R/Python/Shell 业务代码注释统一使用简体中文；仅保留函数名、变量名、包名、公式和标准
+技术术语的英文原文。随包模板已经按此约定编写。
+
 ## 包内容
 
 - `SKILL.md`：最小执行顺序和命令；

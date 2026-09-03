@@ -116,8 +116,7 @@ def validate(value: object, root: Path, final: bool = False) -> tuple[list[str],
         if not isinstance(provenance, dict) or not provenance:
             errors.append(f"{label}.provenance must identify source data and parameters")
         else:
-            # These fields may live at the top level for concise manifests or
-            # inside provenance; final checks require all three real links.
+            # 这些字段可以放在 manifest 顶层或 provenance 内；最终检查要求三条真实链接都存在。
             source_code = figure.get("source_code", provenance.get("source_code"))
             data_sources = figure.get("data_sources", provenance.get("data_sources"))
             run_record = figure.get("run_record", provenance.get("run_record"))
@@ -175,7 +174,7 @@ def main(argv: list[str] | None = None) -> int:
     elif warnings:
         status = "EVIDENCE_NEEDED"
     else:
-        # A draft manifest is a scaffold, never a release PASS.
+        # 草稿 manifest 只是脚手架，不能作为发布 PASS。
         status = "EVIDENCE_NEEDED"
     result = {
         "status": status,

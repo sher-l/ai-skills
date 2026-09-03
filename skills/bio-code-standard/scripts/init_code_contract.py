@@ -94,13 +94,12 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     output.mkdir(parents=True, exist_ok=True)
     contract, pack = starter(args.module, args.quality_profile, args.effort_profile, languages, args.with_plot)
-    # The review is a module-level scientific record, never a child of the
-    # generated contract workspace.  ``--output`` is normally MODULE/.code-contract.
+    # 审查记录属于模块级科学文档，不是生成合同工作区的子文件。
+    # ``--output`` 通常是 MODULE/.code-contract。
     module_root = output.parent
     module_doc = module_root / "doc" / "source-review.md"
     if module_doc.is_file():
-        # When scaffolding beside an existing module, bind the contract to the
-        # module's already-reviewed source rather than the generated example.
+        # 在已有模块旁边生成脚手架时，合同绑定到已审查的真实源码，而不是新生成的示例。
         reviewed_root = module_root
         try:
             reviewed = source_review.source_inventory(reviewed_root)
@@ -126,9 +125,8 @@ def main(argv: list[str] | None = None) -> int:
         shutil.copyfile(TEMPLATES / "r_stage.R", output / "r_stage.R")
     if "python" in languages:
         shutil.copyfile(TEMPLATES / "python_stage.py", output / "python_stage.py")
-    # Do not manufacture a review for a module that has no source yet.  The
-    # required first action is an explicit ``source-review init`` against the
-    # real module root; otherwise the contract remains EVIDENCE_NEEDED.
+    # 模块尚无源码时不要伪造审查记录；第一步必须针对真实模块根目录执行
+    # ``source-review init``，否则合同保持 EVIDENCE_NEEDED。
     print(json.dumps({"status": "DRAFT", "module": args.module, "output": str(output)}, ensure_ascii=False))
     return 0
 

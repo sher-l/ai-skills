@@ -58,7 +58,7 @@ def source_inventory(root: Path) -> list[dict[str, str | int]]:
         try:
             text = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
-            # Keep the file in the inventory; validation reports the encoding.
+            # 保留该文件到清单，校验阶段再报告编码问题。
             text = ""
         entries.append(
             {
