@@ -24,8 +24,10 @@ MODULE/
 ├── scripts/
 │   ├── init.R 或 init.py
 │   ├── calculate/       # main、输入检查、统计核心和可复用中间对象
+│   │   └── methods/      # 多方法计算后端（有多方法时）
 │   ├── plot/            # 只消费 calculate 已发布结果
 │   └── report/          # 只组装 calculate + plot 事实
+├── resources/           # 模块随附且可公开的资源
 ├── result/              # 直接放编号业务结果
 ├── report/              # 正式报告
 ├── cache/               # 只有真实下游会复用的缓存

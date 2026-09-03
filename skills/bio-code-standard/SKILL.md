@@ -36,7 +36,8 @@ description: 为 R/Python 生物信息学 coder 提供 v2.2 的源码审查、in
    `calculate` 可在 `scripts/calculate/` 下拆分多个文件；`plot` 只读已发布表或声明的
    cache，不重算科学结果；`report` 只读 calculate 结果和 plot 图件；`full` 只串联
    `calculate → plot → report`，不把 `init` 算入 full。每个逻辑图绑定真实 source code、
-   data source、run record、尺寸、DPI、字体、renderer、颜色语义和 PNG/PDF 输出。
+   data source、run record、尺寸、DPI、字体、renderer、颜色语义和 PNG/PDF 输出；配置中的
+   `font_family`、`font_size` 及语义颜色键必须由绘图代码实际读取。
    每次命令只写一个同名日志：`calculate.log`、`plot.log`、`report.log` 或 `full.log`；
    `init` 不写日志，`full` 的子阶段进度只写入 `full.log`，不创建三个子阶段日志。
 7. 交接时填写与报告侧兼容的 `analysis_evidence_pack`。它只保存机器事实和来源，不

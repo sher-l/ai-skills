@@ -14,6 +14,12 @@ cache；若上游结果不存在，应返回带类型/内容/修复建议/退出
 不能把截图、报告裁剪图或手工重绘当作科学来源；空图、非法值、缺图例或静默 fallback
 进入失败状态。
 
+每个逻辑图在 `module.config.ini` 中使用独立的 `[plot.<figure_id>]` 分区。至少声明
+`width`、`height`、`formats`、`font_family`、`font_size`；有颜色编码时逐项声明语义颜色，
+例如 `up_color`、`down_color`、`nonsignificant_color` 和 `threshold_color`。绘图代码必须
+读取这些键并产生可观察影响，不能在脚本里另写一套默认值；颜色值使用十六进制形式，字体名
+必须能在实际运行环境中解析。
+
 逻辑图的 PNG/PDF 文件应在 `result/` 同一目录并列输出（例如 `result/02.network.png` 与
 `result/02.network.pdf`），并在 manifest 中共享同一数据、代码和运行记录；不要创建
 `figures/` 子目录。
