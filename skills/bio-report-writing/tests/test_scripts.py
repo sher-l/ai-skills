@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import base64
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -119,6 +120,19 @@ class ReportSkillSmoke(unittest.TestCase):
             self.assertNotEqual(checked.returncode, 0)
             self.assertIn("non-declarative", checked.stderr)
 
+    def test_engineering_status_does_not_enter_reader_docx(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            docx = Path(temp) / "status.docx"
+            from docx import Document
+
+            document = Document()
+            document.add_paragraph("方法状态：complete；通过运行记录校验。")
+            document.save(docx)
+            checked = run("validate_docx_structure.py", str(docx), "--final", "--json")
+            self.assertNotEqual(checked.returncode, 0)
+            payload = json.loads(checked.stdout)
+            self.assertGreater(payload["engineering_text"], 0)
+
     def test_failed_skeleton_keeps_previous_output(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -141,6 +155,21 @@ class ReportSkillSmoke(unittest.TestCase):
             checked = run("validate_report_contract.py", "--plan", str(plan), "--evidence-pack", str(evidence))
             self.assertNotEqual(checked.returncode, 0)
             self.assertIn("unknown top-level", checked.stderr)
+
+    def test_report_section_order_is_fixed(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            evidence = root / "pack.json"
+            plan = root / "plan.json"
+            pack(evidence)
+            run("init_report_plan.py", "--evidence-pack", str(evidence), "--output", str(plan))
+            value = json.loads(plan.read_text(encoding="utf-8"))
+            value["quality_profile"] = "release"
+            value["sections"][1], value["sections"][2] = value["sections"][2], value["sections"][1]
+            plan.write_text(json.dumps(value, ensure_ascii=False), encoding="utf-8")
+            checked = run("validate_report_contract.py", "--plan", str(plan), "--evidence-pack", str(evidence), "--final", "--root", str(root))
+            self.assertNotEqual(checked.returncode, 0)
+            self.assertIn("sections must follow", checked.stderr)
 
     def test_question_title_in_pack_is_blocked_before_build(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -227,7 +256,27 @@ class ReportSkillSmoke(unittest.TestCase):
         payload = json.loads(result.stdout)
         self.assertEqual(payload["note_callouts"], 1)
         self.assertEqual(payload["note_style_issues"], [])
+        self.assertEqual(payload["note_structure_issues"], [])
+        self.assertEqual(payload["figure_box_issues"], [])
+        self.assertEqual(payload["heading_style_issues"], [])
         self.assertIn("[[NOTE:DIRECTION]]", payload["template_markers"])
+
+    def test_heading_run_cannot_override_title_style(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            docx = Path(temp) / "small-title.docx"
+            from docx import Document
+            from docx.shared import Pt
+
+            document = Document()
+            title = document.add_paragraph(style="Title")
+            title_run = title.add_run("分析报告")
+            title_run.font.size = Pt(11.5)
+            title_run.bold = False
+            document.save(docx)
+            checked = run("validate_docx_structure.py", str(docx), "--final", "--json")
+            self.assertNotEqual(checked.returncode, 0)
+            payload = json.loads(checked.stdout)
+            self.assertTrue(payload["heading_style_issues"])
 
     def test_docx_template_renderer_fills_note_tables_and_figure(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -262,7 +311,11 @@ class ReportSkillSmoke(unittest.TestCase):
                     "FIGURE:F1.CAPTION_FIELDS": "对象；分组；轴和单位；统计层级；阈值；边界",
                     "ANALYSIS_LIMITATIONS": "样本量和外部验证范围有限",
                     "OUTPUTS_INTRO": "公开业务文件如下。",
-                    "OUTPUT_TABLE_ROWS": {"caption": "公开文件", "rows": [["result/01.tsv", "table", "结果表", "复核", "研究人员"]]},
+                    "OUTPUT_TABLE_ROWS": {"caption": "公开文件", "rows": [
+                        {"path": "result/01.tsv", "kind": "table", "description": "结果表", "purpose": "复核", "consumers": ["研究人员"]},
+                        {"path": "report/report.docx", "kind": "report", "description": "内部报告", "purpose": "交付", "consumers": ["研究人员"]},
+                        {"path": "log/run_record.json", "kind": "evidence", "description": "运行记录", "purpose": "审计", "consumers": ["审计"]},
+                    ]},
                     "TABLE:OUTPUTS": "",
                     "REFERENCES": "limma 官方文档",
                     "VERSION_TABLE_ROWS": {"caption": "软件与资源版本", "rows": [["R", "4.3.0", "计算"]]},
@@ -287,13 +340,44 @@ class ReportSkillSmoke(unittest.TestCase):
             rendered = json.loads(checked.stdout)
             self.assertEqual(rendered["drawings"], 1)
             self.assertEqual(rendered["note_style_issues"], [])
+            rendered_document = __import__("docx").Document(output)
             document_text = "\n".join(
-                [paragraph.text for paragraph in __import__("docx").Document(output).paragraphs]
+                [paragraph.text for paragraph in rendered_document.paragraphs]
+                + [cell.text for table in rendered_document.tables for row in table.rows for cell in row.cells]
             )
             self.assertNotIn("[[", document_text)
             self.assertNotIn("条件图件", document_text)
             self.assertNotIn("图注字段（由 renderer", document_text)
             self.assertNotIn("TRUE", document_text)
+            self.assertIn("result/01.tsv", document_text)
+            self.assertNotIn("report/report.docx", document_text)
+            self.assertNotIn("run_record.json", document_text)
+
+    def test_docx_template_renderer_keeps_source_urls_out_of_visible_text(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            values = {
+                "quality_profile": "release",
+                "slots": {
+                    "REPORT_TITLE": "来源报告", "REPORT_AUDIENCE": "研究人员", "REPORT_SUMMARY": "摘要",
+                    "ANALYSIS_SCOPE": "范围", "ANALYSIS_METHOD": "方法", "ANALYSIS_RESULT": "结果",
+                    "ANALYSIS_CONCLUSION": "结论", "ANALYSIS_LIMITATIONS": "限制", "OUTPUTS_INTRO": "公开文件",
+                    "REFERENCES": [{"name": "limma", "version": "3.58", "source": "https://example.org/limma", "purpose": "统计方法"}],
+                    "RESULT_TABLE_ROWS": [], "OUTPUT_TABLE_ROWS": [], "VERSION_TABLE_ROWS": [],
+                },
+            }
+            values_file = root / "values.json"
+            values_file.write_text(json.dumps(values, ensure_ascii=False), encoding="utf-8")
+            output = root / "report.docx"
+            result = run(
+                "render_docx_template.py", "--template", str(ROOT / "assets" / "report_template.docx"),
+                "--values", str(values_file), "--output", str(output), "--final", "--json",
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            document = __import__("docx").Document(output)
+            text = "\n".join(paragraph.text for paragraph in document.paragraphs)
+            self.assertNotIn("https://example.org", text)
+            self.assertIn("limma", text)
 
     def test_docx_template_renderer_removes_optional_qc_note_and_figures(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -330,6 +414,110 @@ class ReportSkillSmoke(unittest.TestCase):
             self.assertNotIn("质控与异常", text)
             self.assertNotIn("图件", text)
             self.assertEqual(len(document.tables), 3)  # result/output/version; Note is conditional
+
+    def test_docx_template_renderer_keeps_multiple_explicit_notes(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            values = {
+                "slots": {
+                    "REPORT_TITLE": "双提示报告", "REPORT_AUDIENCE": "研究人员", "REPORT_SUMMARY": "摘要",
+                    "ANALYSIS_SCOPE": "范围", "ANALYSIS_METHOD": "方法", "ANALYSIS_RESULT": "结果",
+                    "ANALYSIS_CONCLUSION": "结论", "ANALYSIS_LIMITATIONS": "限制", "OUTPUTS_INTRO": "公开文件",
+                    "REFERENCES": "来源", "RESULT_TABLE_ROWS": [], "OUTPUT_TABLE_ROWS": [], "VERSION_TABLE_ROWS": [],
+                    "notes": [
+                        {"id": "direction", "kind": "direction", "text": "logFC = case − control。"},
+                        {"id": "unit", "kind": "unit", "text": "统计单位为供体。"},
+                    ],
+                }
+            }
+            values_file = root / "values.json"
+            values_file.write_text(json.dumps(values, ensure_ascii=False), encoding="utf-8")
+            output = root / "report.docx"
+            result = run(
+                "render_docx_template.py", "--template", str(ROOT / "assets" / "report_template.docx"),
+                "--values", str(values_file), "--output", str(output), "--json",
+            )
+            self.assertNotEqual(result.returncode, 0)
+            document = __import__("docx").Document(output)
+            note_tables = [
+                table for table in document.tables
+                if "Note：" in "".join(cell.text for row in table.rows for cell in row.cells)
+            ]
+            self.assertEqual(len(note_tables), 2)
+            note_text = "\n".join(cell.text for table in note_tables for row in table.rows for cell in row.cells)
+            self.assertIn("统计单位为供体", note_text)
+
+    def test_legacy_figure_box_is_cleared_and_wide_image_fits_body(self) -> None:
+        """旧模板的图段蓝框须清除，宽图按页面版心等比缩放。"""
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            legacy = root / "legacy.docx"
+            shutil.copy2(ROOT / "assets" / "report_template.docx", legacy)
+            from PIL import Image
+            image = root / "wide.png"
+            Image.new("RGB", (2400, 400), "white").save(image)
+            from docx import Document
+            from docx.oxml import OxmlElement
+            document = Document(legacy)
+            source = next(
+                paragraph for paragraph in document.paragraphs
+                if "[[FIGURE:F1.SOURCE]]" in paragraph.text
+            )
+            ppr = source._p.get_or_add_pPr()
+            for name in ("w:pBdr", "w:shd", "w:ind"):
+                ppr.append(OxmlElement(name))
+            # 旧模板可能已经含有一个 drawing；renderer 必须替换它而不是叠加。
+            source.add_run().add_picture(str(image))
+            document.save(legacy)
+            values = {
+                "quality_profile": "release",
+                "slots": {
+                    "REPORT_TITLE": "宽图报告", "REPORT_AUDIENCE": "研究人员", "REPORT_SUMMARY": "摘要",
+                    "ANALYSIS_SCOPE": "范围", "ANALYSIS_METHOD": "方法", "ANALYSIS_QC": "质控",
+                    "ANALYSIS_RESULT": "结果", "ANALYSIS_CONCLUSION": "结论", "ANALYSIS_LIMITATIONS": "限制",
+                    "NOTE:DIRECTION": {"kind": "direction", "text": "case − control"},
+                    "RESULT_TABLE_ROWS": [], "OUTPUT_TABLE_ROWS": [], "VERSION_TABLE_ROWS": [],
+                    "FIGURE:F1.TITLE": "宽图", "FIGURE:F1.SOURCE": "wide.png",
+                    "FIGURE:F1.CAPTION": "对象、分组、轴、单位、统计层级、边界",
+                    "OUTPUTS_INTRO": "公开文件", "REFERENCES": "来源",
+                },
+            }
+            values_file = root / "values.json"
+            values_file.write_text(json.dumps(values, ensure_ascii=False), encoding="utf-8")
+            output = root / "report.docx"
+            result = run(
+                "render_docx_template.py", "--template", str(legacy), "--values", str(values_file),
+                "--root", str(root), "--output", str(output), "--final", "--require-note", "--json",
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "PASS")
+            self.assertEqual(payload["unresolved"], [])
+            self.assertEqual(payload.get("figure_box_issues", []), [])
+            rendered = Document(output)
+            self.assertEqual(len(rendered.inline_shapes), 1)
+            body_width = rendered.sections[0].page_width - rendered.sections[0].left_margin - rendered.sections[0].right_margin
+            shape = rendered.inline_shapes[0]
+            self.assertLessEqual(shape.width, body_width)
+            self.assertAlmostEqual(shape.width / shape.height, 6.0, places=3)
+            checked = run("validate_docx_structure.py", str(output), "--final", "--require-note", "--json")
+            self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
+            self.assertEqual(json.loads(checked.stdout).get("figure_box_issues", []), [])
+
+    def test_failed_final_template_render_does_not_replace_existing_report(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            target = root / "report.docx"
+            target.write_bytes(b"previous release")
+            values = root / "values.json"
+            values.write_text(json.dumps({"quality_profile": "release", "slots": {}}, ensure_ascii=False), encoding="utf-8")
+            result = run(
+                "render_docx_template.py",
+                "--template", str(ROOT / "assets" / "report_template.docx"),
+                "--values", str(values), "--root", str(root), "--output", str(target), "--final", "--json",
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(target.read_bytes(), b"previous release")
 
 
 if __name__ == "__main__":

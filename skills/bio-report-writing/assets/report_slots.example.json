@@ -52,6 +52,7 @@
     "notes": {
       "type": "note[]",
       "source": "analysis_points[].notes[]",
+      "component": "callout-note",
       "fields": ["id", "title", "text", "kind", "border", "fill", "label_color"],
       "default_style": {"border": "#5B9BD5", "fill": "#DDEBF7", "label_color": "#2F75B5"},
       "condition": "non-empty semantic boundary"

@@ -36,15 +36,16 @@ def build_slots(pack: dict) -> dict:
         "OUTPUT_TABLE_ROWS": [item for item in point.get("outputs", []) if item.get("published")],
         "VERSION_TABLE_ROWS": pack.get("versions", []),
     }
-    comparison = point.get("comparison")
-    if isinstance(comparison, dict):
-        slots["NOTE:DIRECTION"] = {
-            "kind": "direction",
-            "text": (
-                f"{comparison.get('metric', '')}：{comparison.get('direction', '')}；"
-                f"目标组={comparison.get('target', '')}；参照组={comparison.get('reference', '')}"
-            ).lstrip("："),
-        }
+    # Note 是条件性真实事实；不能仅因 comparison 存在就合成“按配置”提示。
+    notes = point.get("notes")
+    if isinstance(notes, list) and notes:
+        slots["NOTES"] = notes
+        for index, note in enumerate(notes):
+            if isinstance(note, dict):
+                note_id = str(note.get("id", "direction")).upper()
+                slots[f"NOTE:{note_id}"] = note
+                if index == 0 or note_id == "DIRECTION":
+                    slots["NOTE:DIRECTION"] = note
     for figure in point.get("figure_table_refs", []):
         if not isinstance(figure, dict):
             continue

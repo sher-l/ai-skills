@@ -56,8 +56,8 @@ def point_block(point: dict, mode: str) -> list[str]:
         lines += [f"- 可核对质控与异常：{text(point.get('qc'), point.get('id', 'AP') + '.qc')}" ]
     elif mode == "limitations":
         lines += [
-            f"- 状态：{text(point.get('status'), point.get('id', 'AP') + '.status')}",
-            f"- 限制与待验证：{text(point.get('limitations'), point.get('id', 'AP') + '.limitations')}",
+            f"- 解释边界：{text(point.get('limitations'), point.get('id', 'AP') + '.limitations')}",
+            f"- 待验证用途：{text(point.get('next_step'), point.get('id', 'AP') + '.next_step')}",
         ]
     elif mode == "conclusion":
         lines += [f"- 结论回收：{text(point.get('interpretation'), point.get('id', 'AP') + '.conclusion')}" ]

@@ -7,7 +7,7 @@
     "schema_version": {"const": "0.1.0"},
     "module": {"type": "string", "minLength": 1},
     "quality_profile": {"enum": ["draft", "release"]},
-    "result_layout": {"enum": ["flat", "module_contract"]},
+    "result_layout": {"const": "flat"},
     "title": {"type": "string"},
     "audience": {"type": "string"},
     "references": {"type": "array", "items": {"$ref": "#/$defs/source"}},
@@ -110,6 +110,7 @@
         "title": {"type": "string"},
         "text": {"type": "string", "minLength": 1},
         "kind": {"enum": ["direction", "unit", "boundary", "interpretation"]},
+        "component": {"const": "callout-note"},
         "border": {"const": "#5B9BD5"},
         "fill": {"const": "#DDEBF7"},
         "label_color": {"const": "#2F75B5"}

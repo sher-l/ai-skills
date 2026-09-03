@@ -12,7 +12,7 @@
     "quality_profile": {"enum": ["draft", "release"]},
     "effort_profile": {"enum": ["mechanical", "scientific_review"]},
     "max_repair_rounds": {"type": "integer", "minimum": 0, "maximum": 2},
-    "result_layout": {"enum": ["flat", "module_contract"]},
+    "result_layout": {"const": "flat"},
     "evidence_pack": {"type": "string", "minLength": 1},
     "template": {"type": "string", "minLength": 1},
     "evidence_targets": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["id", "title"], "properties": {"id": {"type": "string", "minLength": 1}, "title": {"type": "string", "minLength": 1}, "analysis_point_ids": {"type": "array", "items": {"type": "string", "minLength": 1}}}}},

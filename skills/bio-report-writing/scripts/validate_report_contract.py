@@ -18,7 +18,15 @@ OVERCLAIM_TERMS = ("证明", "验证", "因果", "治疗", "疗效", "临床价�
 NEGATION = ("不代表", "不能", "无法", "尚不能", "未证明", "不支持", "未能")
 MARKETING = re.compile(r"(?:扫码|公司介绍|服务领域|风险比看不懂|小果带你|联系我们)")
 CORRUPTION = re.compile(r"\uFFFD")
-REPEATED_WORD = re.compile(r"(?:结果显示|候选|表达|分析|数值越大表示){2,}")
+REPEATED_WORD = re.compile(r"(结果显示|候选|表达|分析|数值越大表示)\1|结果显示显示")
+GENERIC_NOTE_TEXT = re.compile(r"(?:按(?:本次|当前)?配置|以原图为准|以图中为准|见原图|根据需要|待确认|待补(?:充)?|占位)", re.I)
+ENGINEERING_TEXT = re.compile(
+    r"(?:\brun[_ -]?id\b|\b(?:artifact|checksum)\s*[:=]|\boutput[_ -]?tree\b|\bcontract[_ -]?pass\b|"
+    r"通过运行记录校验|状态\s*[:：]\s*(?:complete|blocked|running|failed)|EVIDENCE_NEEDED|"
+    r"CONTRACT_PASS|OUTPUT_TREE_PASS)",
+    re.I,
+)
+VISIBLE_SOURCE_URL = re.compile(r"(?:https?://|\bdoi\s*:\s*10\.)", re.I)
 TOP_FIELDS = {
     "schema_version", "module", "quality_profile", "result_layout", "title", "audience",
     "references", "versions", "terminology_sources", "reader_questions", "evidence_targets",
@@ -58,6 +66,19 @@ SEMANTIC_ALIASES = {
     "figures": ("figure", "plot", "图", "绘图"),
     "tables": ("table", "表", "结果表"),
 }
+CANONICAL_SECTION_ORDER = (
+    "summary",
+    "scope",
+    "methods",
+    "qc",
+    "results",
+    "conclusion",
+    "limitations",
+    "outputs",
+    "references",
+    "versions",
+)
+REQUIRED_FINAL_SECTIONS = set(CANONICAL_SECTION_ORDER) - {"qc"}
 
 
 def section_semantics(section: dict) -> set[str]:
@@ -176,9 +197,14 @@ def _validate_note_slots(
         text = _slot_text(record)
         if not text:
             _strict_issue(errors, f"{record_label} requires non-empty text", strict)
+        elif GENERIC_NOTE_TEXT.search(text):
+            _strict_issue(errors, f"{record_label} contains generic Note text; provide the measured fact", strict)
         kind_value = record.get("kind")
         if kind_value is not None and kind_value not in {"direction", "unit", "boundary", "interpretation"}:
             errors.append(f"{record_label}.kind is invalid")
+        component = record.get("component")
+        if component is not None and component != "callout-note":
+            errors.append(f"{record_label}.component must be callout-note")
         for field, expected in (("border", "#5B9BD5"), ("fill", "#DDEBF7"), ("label_color", "#2F75B5")):
             if field in record and record[field] != expected:
                 errors.append(f"{record_label}.{field} must be {expected}")
@@ -530,10 +556,8 @@ def validate_pack(
         errors.append("pack schema_version must be 0.1.0")
     if pack.get("quality_profile") not in {"draft", "release"}:
         errors.append("pack quality_profile must be draft or release")
-    if pack.get("result_layout") not in {"flat", "module_contract"}:
-        errors.append("pack result_layout must be flat or module_contract")
-    if strict and pack.get("result_layout") != "flat":
-        errors.append("release result_layout must be flat; migrate the historical module_contract layout first")
+    if pack.get("result_layout") != "flat":
+        errors.append("v2.2 pack result_layout must be flat; record historical nested paths only in migration evidence")
     for field in ("title", "audience"):
         if field in pack and pack[field] is not None and not isinstance(pack[field], str):
             errors.append(f"pack {field} must be a string")
@@ -836,10 +860,8 @@ def validate_plan(plan: object, point_ids: set[str], *, final: bool = False) -> 
             errors.append(f"plan {field} must be declarative visible text")
     if type(plan.get("max_repair_rounds")) is not int or not 0 <= plan["max_repair_rounds"] <= 2:
         errors.append("plan max_repair_rounds must be an integer from 0 to 2")
-    if plan.get("result_layout") not in {"flat", "module_contract"}:
-        errors.append("plan result_layout must be flat or module_contract")
-    if final and plan.get("result_layout") != "flat":
-        errors.append("release result_layout must be flat; migrate the historical module_contract layout first")
+    if plan.get("result_layout") != "flat":
+        errors.append("v2.2 plan result_layout must be flat; record historical nested paths only in migration evidence")
     for template_key in ("template", "report_template"):
         if template_key in plan:
             template = plan.get(template_key)
@@ -867,6 +889,17 @@ def validate_plan(plan: object, point_ids: set[str], *, final: bool = False) -> 
     section_ids = [item.get("id") for item in sections if isinstance(item, dict)]
     if len(section_ids) != len(set(section_ids)):
         errors.append("plan section ids must be unique")
+    canonical_ids = [item for item in section_ids if item in CANONICAL_SECTION_ORDER]
+    expected_ids = sorted(canonical_ids, key=CANONICAL_SECTION_ORDER.index)
+    if canonical_ids != expected_ids:
+        errors.append("sections must follow summary → scope → methods → qc → results → conclusion → limitations → outputs → references → versions")
+    if final:
+        missing_sections = sorted(REQUIRED_FINAL_SECTIONS - set(section_ids), key=CANONICAL_SECTION_ORDER.index)
+        if missing_sections:
+            errors.append(f"final plan missing required sections: {missing_sections}")
+        unknown_ids = [item for item in section_ids if item not in CANONICAL_SECTION_ORDER]
+        if unknown_ids:
+            errors.append(f"final plan uses non-canonical section ids: {unknown_ids}")
     sections_by_semantic: dict[str, list[dict]] = {}
     for index, section in enumerate(sections):
         if not isinstance(section, dict):
@@ -1058,8 +1091,8 @@ def scan_markdown(path: Path) -> list[str]:
         stripped = line.strip()
         if not stripped or stripped.startswith("<!--"):
             continue
-        if "http://" in stripped or "https://" in stripped:
-            continue
+        if VISIBLE_SOURCE_URL.search(stripped):
+            errors.append(f"line {number}: URL/DOI must remain in source records, not visible report text")
         if QUESTION.search(stripped):
             errors.append(f"line {number}: declarative visible text required")
         if PLACEHOLDER.search(stripped):
@@ -1070,6 +1103,8 @@ def scan_markdown(path: Path) -> list[str]:
             errors.append(f"line {number}: encoding corruption marker found")
         if REPEATED_WORD.search(stripped):
             errors.append(f"line {number}: repeated phrase needs editorial repair")
+        if ENGINEERING_TEXT.search(stripped):
+            errors.append(f"line {number}: engineering status/provenance text is not reader content")
     return errors
 
 

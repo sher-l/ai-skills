@@ -1,4 +1,4 @@
 interface:
   display_name: "模块开发调度"
-  short_description: "为 develop-module 选择阶段与领域门禁"
-  default_prompt: "使用 $module-development-scheduler 的 mechanical 路由：生成并验证一个 route_plan，选择唯一 Matt owner 和已声明 adapter checks；不创建第二套生命周期或临时边界。"
+  short_description: "为 develop-module 生成 v2.2 路由与领域门禁"
+  default_prompt: "使用 $module-development-scheduler v2.2 的 mechanical 路由：先确定 report-only、plot 或 full，代码先做 source_review，再按 scope 接对应 coder；只返回一个 Matt owner 和已声明 leaf checks，不创建第二套生命周期。"

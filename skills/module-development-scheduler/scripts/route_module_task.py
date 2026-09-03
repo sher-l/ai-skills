@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Produce a deterministic internal route plan for develop-module.
+"""为 develop-module 生成确定性的内部路由计划。
 
-The scheduler is deliberately boring: it classifies the work, names the
-leaf adapters and returns one Matt owner.  It never runs an adapter or makes a
-scientific decision.  Keep the data model explicit so a lifecycle owner is not
-mistaken for a domain adapter by a downstream consumer.
+调度器只分类任务、列出叶子 adapter 并返回一个 Matt owner；不运行 adapter，
+也不做科学判断。数据模型显式区分生命周期 owner 与领域 adapter，避免下游误把
+owner 递归成 adapter。
 """
 from __future__ import annotations
 
@@ -12,13 +11,22 @@ import argparse
 import json
 import os
 from pathlib import Path
-import re
 import tempfile
 from typing import Any
 
 
 CODE_HINTS = {".r", ".rmd", ".py", ".sh", ".yaml", ".yml", ".json", ".ini", ".toml"}
-REPORT_HINTS = {"report", "figure", "caption", "docx", "report_stage"}
+# `figure`/`renderer` 只表示作图能力；只有明确报告表面才加载 report adapter。
+REPORT_HINTS = {
+    "report",
+    "caption",
+    "docx",
+    "report_stage",
+    "narrative",
+    "prose",
+    "template",
+}
+REPORT_ONLY_HINTS = set(REPORT_HINTS)
 TASK_TYPES = {"new", "migrate", "optimize", "substantial_change", "review"}
 PHASES = {"scope", "build", "draft", "finish"}
 WORK_KINDS = {"auto", "code", "report", "both", "review"}
@@ -47,7 +55,7 @@ PLAN_PHASE = {"scope": "start", "build": "build", "draft": "draft", "finish": "f
 
 
 def _normalise_report_context(value: str | None, report: bool) -> str:
-    """Accept the human spelling while keeping one canonical JSON value."""
+    """接受用户写法，并保留一个规范 JSON 值。"""
     if value is None or value in {"", "auto"}:
         return "module_reusable" if report else "none"
     normalised = value.strip().lower().replace("-", "_")
@@ -69,7 +77,7 @@ def _infer_execution_scope(
     report: bool,
     paths: list[str],
 ) -> str:
-    """Choose the smallest explicit execution boundary from declared paths."""
+    """依据声明路径选择最小的执行边界。"""
     normalised = _normalise_execution_scope(explicit)
     if normalised is not None:
         return normalised
@@ -116,8 +124,7 @@ def _bounded_rounds(
             errors.append("repair_round exceeds max_repair_rounds")
         if checkpoint_round > max_checkpoint_rounds:
             errors.append("checkpoint_round exceeds max_checkpoint_rounds")
-        # A zero regression ceiling means no artificial cap; regression rounds
-        # are evidence, not a second lifecycle.
+        # 回归上限为零表示不设人工上限；回归轮是证据，不是第二套生命周期。
         if max_regression_rounds and regression_round > max_regression_rounds:
             errors.append("regression_round exceeds max_regression_rounds")
     return errors
@@ -149,21 +156,23 @@ def infer(
     review_required: bool | None = None,
     execution_scope: str | None = None,
 ) -> dict[str, Any]:
-    """Return one deterministic route plan.
+    """返回一个确定性的路由计划。
 
-    Positional arguments up to ``max_repair_rounds`` are retained for callers
-    of the first scheduler draft.  New controls are keyword-friendly and do
-    not alter the lifecycle owner.
+    保留 ``max_repair_rounds`` 之前的定位参数，兼容早期调用方；新增控制项可用
+    关键字传入，且不改变生命周期 owner。
     """
     paths = [path for path in paths if isinstance(path, str)]
     lowered = [path.lower() for path in paths]
     path_code = any(Path(path).suffix.lower() in CODE_HINTS for path in lowered)
+    joined_paths = " ".join(lowered)
+    path_plot = any(token in joined_paths for token in PLOT_HINTS)
+    path_full = any(token in joined_paths for token in FULL_HINTS)
+    path_code = path_code or path_plot or path_full
     path_report = any(any(token.lower() in path for token in REPORT_HINTS) for path in lowered)
     inferred_report = bool(has_report or path_report)
 
-    # New/migrate/optimize/change are code work by default.  An explicit report
-    # kind remains authoritative; this is the bug fix for an empty ``new``
-    # scope silently skipping the code adapter.
+    # new/migrate/optimize/change 默认是 code；显式 report 类型优先，避免空的
+    # new scope 静默跳过 code adapter。
     code_default = task_type in {"new", "migrate", "optimize", "substantial_change"}
     code = work_kind in {"code", "both"} or (
         work_kind in {"auto", "review"} and (path_code or code_default)
@@ -180,18 +189,16 @@ def infer(
         code = report = True
 
     explicit_scope = _normalise_execution_scope(execution_scope)
-    joined_paths = " ".join(path.lower() for path in paths)
     report_surface = bool(paths) and all(
-        any(token in path.lower() for token in REPORT_HINTS)
+        any(token in path.lower() for token in REPORT_ONLY_HINTS)
         for path in paths
-    ) and not any(token in joined_paths for token in FULL_HINTS | PLOT_HINTS)
+    ) and not any(token in joined_paths for token in FULL_HINTS)
     if report_surface and work_kind in {"auto", "review"}:
         code, report = False, True
     if explicit_scope == "report-only":
-        # The explicit scope is authoritative for a report edit.  A report
-        # renderer may itself be an R/Python file, so the suffix alone does
-        # not turn this into scientific code work.
-        if not any(token in joined_paths for token in FULL_HINTS | PLOT_HINTS):
+        # 报告编辑的显式 scope 优先。报告 renderer 也可能是 R/Python 文件，
+        # 因此不能仅凭后缀把它当科学代码。
+        if not any(token in joined_paths for token in FULL_HINTS):
             code, report = False, True
     elif explicit_scope == "plot":
         code = True
@@ -220,10 +227,9 @@ def infer(
     if scope not in EXECUTION_SCOPES:
         blockers.append("execution_scope must be report-only, plot, or full")
     if explicit_scope is None and paths and not report_surface:
-        lowered_tokens = set(re.findall(r"[a-z0-9]+", joined_paths))
-        clear_plot = bool(lowered_tokens & PLOT_HINTS)
-        clear_full = bool(lowered_tokens & FULL_HINTS)
-        if code and not clear_plot and not clear_full:
+        clear_plot = any(token in joined_paths for token in PLOT_HINTS)
+        clear_full = any(token in joined_paths for token in FULL_HINTS)
+        if (code or (not report and task_type != "review")) and not clear_plot and not clear_full:
             blockers.append("execution_scope is ambiguous; pass --execution-scope report-only, plot, or full")
     if scope == "report-only" and code:
         blockers.append("execution_scope=report-only cannot include code work")
@@ -248,9 +254,8 @@ def infer(
         )
     )
 
-    # A route is a handoff decision, not a second lifecycle.  A spec-less
-    # request always returns to Matt planning, even if the caller says it is a
-    # multi-session job.
+    # route 是交接决策，不是第二套生命周期。没有 SPEC 时一律回到 Matt planning，
+    # 即使调用方声明了 multi-session。
     if single_session and spec_ready:
         route = "fork"
     elif multi_session and spec_ready:
@@ -258,9 +263,8 @@ def infer(
     else:
         route = "ask-matt"
 
-    # ``has_full`` and ``requires_review`` are capability declarations, not
-    # guesses from file names.  Unknown capability means the corresponding
-    # finish check is not scheduled; the caller must opt in explicitly.
+    # ``has_full`` 与 ``requires_review`` 是能力声明，不从文件名猜测。能力未知时
+    # 不安排对应 finish 检查，必须由调用方显式启用。
     if full_required is not None:
         has_full = full_required
     if review_required is not None:
@@ -270,6 +274,9 @@ def infer(
         requires_review,
         False,
     )
+    if full and scope in {"report-only", "plot"}:
+        blockers.append(f"execution_scope={scope} cannot require full")
+        full = False
     if phase == "finish" and quality_profile != "release":
         blockers.append("finish phase requires quality_profile=release")
 
@@ -284,13 +291,12 @@ def infer(
     if phase == "scope":
         checks.append("scope_review")
     if code:
-        # Source review is deliberately first; report work can only consume a
-        # code evidence pack after this hook has completed.
+        # source review 固定先行；报告工作只能消费该 hook 完成后的 code evidence pack。
         checks.extend(["source_review", "code_contract"])
         if scope == "full":
             checks.append("analysis_evidence_pack")
             execution_order.extend(["source_review", "analysis_coder"])
-        else:  # plot: no scientific result/evidence recomputation
+        else:  # plot：不重算科学结果或 evidence
             checks.append("figure_manifest")
             execution_order.extend(["source_review", "plot_coder"])
     if report:
@@ -317,7 +323,7 @@ def infer(
     )
     return {
         "schema_version": "0.1.0",
-        "module": "",
+        "module": module or "",
         "task_type": task_type,
         "work_kind": work_kind,
         "execution_scope": scope,

@@ -1,9 +1,12 @@
 ---
 name: module-development-scheduler
-description: 为生信模块开发任务生成确定的阶段路由、领域 skill 加载计划、检查清单和阻断条件，并把执行交回既有生命周期 owner。Use internally from develop-module when a module is new, migrated, optimized, substantially changed, reviewed, or needs code/report domain adapters.
+description: 为生信模块开发任务生成确定的阶段路由、领域 skill 加载计划、检查清单和阻断条件，并把执行交回既有生命周期 owner。模块新建、迁移、优化、实质变更、审查或需要代码/报告领域适配器时使用。
 ---
 
 # 模块开发调度
+
+规则版本：Dev-Skill v2.2；`route_plan.schema.json` 的 `schema_version=0.1.0` 是独立接口版本。
+发布状态：开发中（非稳定版）；可独立发布的 mechanical route adapter，不代表模块科学结果或生命周期成熟度。
 
 这是一个可独立发布的路由适配器，也是 `develop-module` 的内部工具。人只需调用 `$develop-module`；本 skill 不创建第二套 Goal、phase、commit 或 receipt。默认 `effort_profile=mechanical`，路由脚本决定检查集合，不让模型临时扩展范围。
 

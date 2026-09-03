@@ -43,6 +43,7 @@
       "title": "比较方向",
       "text": "logFC = case − control；正值表示 case 中相对高表达，负值表示 control 中相对高表达。",
       "kind": "direction",
+      "component": "callout-note",
       "border": "#5B9BD5",
       "fill": "#DDEBF7",
       "label_color": "#2F75B5"

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import importlib.util
 from pathlib import Path
 import subprocess
 import sys
@@ -80,6 +81,27 @@ class RouteSmoke(unittest.TestCase):
             value["required_checks"].index("source_review"),
             value["required_checks"].index("code_contract"),
         )
+
+    def test_infer_keeps_module_for_library_callers(self) -> None:
+        spec = importlib.util.spec_from_file_location("route_module_task", SCRIPT)
+        assert spec and spec.loader
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        value = module.infer(
+            "new",
+            [],
+            False,
+            False,
+            False,
+            False,
+            "scope",
+            "draft",
+            "mechanical",
+            "auto",
+            2,
+            module="demo",
+        )
+        self.assertEqual(value["module"], "demo")
 
     def test_report_contexts_share_checks_and_do_not_load_code(self) -> None:
         common = [
@@ -179,6 +201,33 @@ class RouteSmoke(unittest.TestCase):
             )
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("owner", result.stderr)
+
+    def test_route_validator_rejects_checks_outside_execution_scope(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            plan = Path(temp) / "route.json"
+            value = json.loads(
+                subprocess.run(
+                    [
+                        sys.executable,
+                        str(SCRIPT),
+                        "--module", "demo",
+                        "--task-type", "new",
+                        "--phase", "build",
+                        "--changed-path", "scripts/plot.R",
+                    ],
+                    text=True,
+                    capture_output=True,
+                ).stdout
+            )
+            value["required_checks"].append("analysis_evidence_pack")
+            plan.write_text(json.dumps(value), encoding="utf-8")
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "validate_route_plan.py"), str(plan)],
+                text=True,
+                capture_output=True,
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("analysis_evidence_pack", result.stderr)
 
     def test_execution_scope_report_only_is_explicit_and_report_coder_only(self) -> None:
         result = subprocess.run(
@@ -280,6 +329,34 @@ class RouteSmoke(unittest.TestCase):
         self.assertEqual(value["execution_order"], ["source_review", "analysis_coder"])
         self.assertIn("analysis_evidence_pack", value["required_checks"])
 
+    def test_scoped_report_or_plot_cannot_enable_full_finish(self) -> None:
+        for scope, path, work_kind in (
+            ("report-only", "docs/report.md", "report"),
+            ("plot", "scripts/plot.R", "auto"),
+        ):
+            with self.subTest(scope=scope):
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        str(SCRIPT),
+                        "--module", "demo",
+                        "--task-type", "new",
+                        "--phase", "finish",
+                        "--quality-profile", "release",
+                        "--work-kind", work_kind,
+                        "--changed-path", path,
+                        "--execution-scope", scope,
+                        "--has-full",
+                    ],
+                    text=True,
+                    capture_output=True,
+                )
+                self.assertNotEqual(result.returncode, 0)
+                value = json.loads(result.stdout)
+                self.assertEqual(value["route"], "BLOCKED")
+                self.assertFalse(value["finish_policy"]["requires_full"])
+                self.assertNotIn("final_full", value["required_checks"])
+
     def test_ambiguous_path_requires_explicit_scope(self) -> None:
         result = subprocess.run(
             [
@@ -317,6 +394,55 @@ class RouteSmoke(unittest.TestCase):
         value = json.loads(result.stdout)
         self.assertEqual(value["adapter_skills"], ["module-development-scheduler", "bio-report-writing"])
         self.assertEqual(value["execution_order"], ["report_coder"])
+
+    def test_report_renderer_is_report_only_but_figure_renderer_is_plot(self) -> None:
+        for path, expected in (
+            ("scripts/report_renderer.py", "report-only"),
+            ("scripts/figure_renderer.py", "plot"),
+        ):
+            with self.subTest(path=path):
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        str(SCRIPT),
+                        "--module",
+                        "demo",
+                        "--task-type",
+                        "new",
+                        "--phase",
+                        "build",
+                        "--changed-path",
+                        path,
+                    ],
+                    text=True,
+                    capture_output=True,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                value = json.loads(result.stdout)
+                self.assertEqual(value["execution_scope"], expected)
+                if expected == "plot":
+                    self.assertEqual(
+                        value["execution_order"], ["source_review", "plot_coder"]
+                    )
+                    self.assertNotIn("bio-report-writing", value["adapter_skills"])
+
+    def test_configuration_surface_without_extension_is_full_code(self) -> None:
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(SCRIPT),
+                "--module", "demo",
+                "--task-type", "review",
+                "--phase", "build",
+                "--changed-path", "config",
+            ],
+            text=True,
+            capture_output=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        value = json.loads(result.stdout)
+        self.assertEqual(value["execution_scope"], "full")
+        self.assertIn("bio-code-standard", value["adapter_skills"])
 
 
 if __name__ == "__main__":

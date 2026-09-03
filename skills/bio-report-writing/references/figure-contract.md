@@ -38,6 +38,18 @@
 - PNG/PDF 是同一逻辑图的不同发布格式时，报告输出表合并为 `name.png(pdf)`；磁盘合同仍逐文件检查存在性、
   尺寸、DPI、renderer 和字体 fallback。
 
+## Note 与 Figure source 的组件边界
+
+`callout-note` 和 `figure source` 是两种不同的排版组件，不能共用段落装饰：
+
+- `callout-note` 是独立提示框。模板用专用 callout table/组件承载标签行和正文行；天蓝填充、边框和标签色只
+  写在该组件内部。没有真实 `notes[]` 事实时，renderer 删除整个 callout。
+- `figure source` 是居中的普通图片段落，只包含一张完整 drawing。该段落没有 `w:pBdr`、`w:shd` 或额外
+  `w:ind`，不使用 Note 的底色、边框、图标或缩进。旧模板若带这些属性，renderer 在插图前清除并由结构门报错。
+
+机器门分别检查两者：Note 检查标签/正文/组件样式；Figure 检查完整媒体、版心 extent 和题→图→注顺序。
+通过 Note 样式检查不能替代 Figure 版心检查。
+
 ## 结果表与输出表
 
 `RESULT_TABLE` 由固定列定义和 typed rows 生成：列顺序、显示名、单位、精度、脚注固定；文本列左对齐，

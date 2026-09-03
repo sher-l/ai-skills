@@ -43,8 +43,6 @@ def classify(message: str, domain: str = "runtime") -> str:
         return "INPUT_ERROR"
     if "source_review" in text:
         return "EVIDENCE_ERROR"
-    if any(word in text for word in ("dependency", "runtime_install", "environment", "interpreter", "package")):
-        return "DEPENDENCY_ERROR"
     if any(
         word in text
         for word in (
@@ -107,11 +105,12 @@ def exit_code(
     status: str = "BLOCKED",
     domain: str = "runtime",
 ) -> int:
-    """把诊断归入约定的四个进程退出码。"""
+    """把诊断归入用户约定的四个进程退出码。"""
     error_list = list(errors)
     if not error_list and status == "PASS":
-        return EXIT_CODES["SUCCESS"]
+        return 0
     kinds = {classify(message, domain) for message in error_list}
+    # 依赖/环境问题优先保留 3；其余校验门禁使用 2；运行和输出故障使用 1。
     if "DEPENDENCY_ERROR" in kinds:
         return EXIT_CODES["DEPENDENCY_ERROR"]
     if kinds & {"INPUT_ERROR", "CONFIG_ERROR", "EVIDENCE_ERROR", "DECISION_REQUIRED"}:

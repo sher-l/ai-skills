@@ -43,10 +43,15 @@ python .agents/skills/bio-report-writing/scripts/validate_docx_structure.py \
 
 ## 视觉门
 
-用目标阅读器（例如 LibreOffice）渲染最终 DOCX，逐页检查：标题和 Note 可见且不孤立，正文无截断/溢出/
+先用代码和 OOXML 做确定性检查：模板调用链、slot 来源、图段是否透明、图片 extent 是否落在版心、
+标题 direct formatting、Note 组件结构、`srcRect`、表格行规则和图题/图注顺序。机器门通过后，仅用一次
+目标阅读器（例如 LibreOffice）渲染最终 DOCX，逐页检查：标题和 Note 可见且不孤立，正文无截断/溢出/
 tofu，表头重复且字号可读，无空白页、错位、裁切、图片拉伸或图题/图注分离；宽图和 panel 在最终显示尺寸
 仍能读出轴、单位、图例、阈值线、分组和颜色语义。逐个打开 standalone PNG/PDF，检查其完整性、尺寸、
 DPI、字体和与报告相同的语义；像素、DPI 或 hash 不能替代人工目检。
+
+模板、renderer 或固定 prose 的每次小改不重复渲染整份报告；只有机器检查通过后的最终候选才做这一次目标
+阅读器冒烟。若冒烟失败，先修代码/模板并重新通过机器门，再生成新的候选。
 
 视觉结论由未参与实现的独立 reviewer 记录；适用模块的最终 `full` 还须遵循 owning
 `<Module>_test/testNN/full/visual-review.json` 合同。

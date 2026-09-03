@@ -2,6 +2,8 @@
 
 renderer、报告合同检查和 DOCX 检查共用诊断对象：`code`、`severity`、`message`、`subject`、`evidence`、
 `supportedFixes`。诊断必须指出一个可修复的模板、slot、来源、媒体或样式对象；不要用泛化建议替代失败事实。
+人类输出先写“错误类型、错误内容和修复建议”，再写退出码；机器 JSON 另保留
+`error_type` 与 `content`，退出码只用于程序分支。
 
 ## 常用阻断代码
 

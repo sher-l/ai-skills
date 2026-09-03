@@ -1,7 +1,7 @@
-# Step 0：source review 合同
+# Step 0：源码审定合同
 
 `doc/source-review.md` 是模块内、可携带的唯一来源审查记录。它不是报告，也不替代
-`module_contract.yaml`。任何 R、Rmd 或 Python 源码、算法、统计阈值、配置或绘图变更都
+`code_contract.json`。任何 R、Rmd 或 Python 源码、算法、统计阈值、配置或绘图变更都
 先刷新这份记录，再进入 coder 阶段。
 
 ## 固定动作
@@ -32,10 +32,10 @@ warning，也不能靠把 `review_status` 改成 `PASS` 绕过；validator 会�
 
 ```text
 metadata: schema_version=2.2, module, source_root, canonical_source, review_status
-## Source inventory
-## Official materials
-## Execution evidence
-## Cross-check matrix
+## 源码清单
+## 官方资料
+## 实际执行证据
+## 三方交叉核对矩阵
 ```
 
 矩阵状态使用 `MATCH`、`CONFLICT`、`MISSING`、`PENDING` 或 `NOT_APPLICABLE`。只有

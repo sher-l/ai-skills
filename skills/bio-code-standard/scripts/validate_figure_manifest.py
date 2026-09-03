@@ -53,9 +53,9 @@ def validate(value: object, root: Path, final: bool = False) -> tuple[list[str],
     errors.extend(f"unknown top-level field: {key}" for key in sorted(set(value) - {"schema_version", "result_layout", "figures"}))
     if value.get("schema_version") != "0.1.0":
         errors.append("schema_version must be 0.1.0")
-    layout = value.get("result_layout", "flat")
-    if layout not in {"flat", "module_contract"}:
-        errors.append("result_layout must be flat or module_contract")
+    layout = value.get("result_layout")
+    if layout != "flat":
+        errors.append("v2.2 figure manifest result_layout must be flat")
     figures = value.get("figures")
     if not isinstance(figures, list):
         return errors + ["figures must be an array"], warnings
@@ -182,7 +182,6 @@ def main(argv: list[str] | None = None) -> int:
             errors,
             warnings,
             domain="figure",
-            fixes="编辑图件合同或真实来源后重新运行校验",
         )
     return code
 

@@ -47,14 +47,26 @@ def _set(element, qn, name: str, value: str) -> None:
     element.set(qn(name if ":" in name else f"w:{name}"), value)
 
 
-def _run_font(run, api, *, size: float = 11.5, color: str | None = None, bold: bool | None = None) -> None:
-    run.font.name = "Times New Roman"
-    run.font.size = api["Pt"](size)
+def _run_font(
+    run,
+    api,
+    *,
+    size: float | None = None,
+    color: str | None = None,
+    bold: bool | None = None,
+    name: str | None = None,
+) -> None:
+    # 未显式指定时继承段落样式，避免 marker 覆盖标题、正文和图注字号。
+    if name is not None:
+        run.font.name = name
+    if size is not None:
+        run.font.size = api["Pt"](size)
     if bold is not None:
         run.bold = bold
     if color:
         run.font.color.rgb = api["RGBColor"].from_string(color)
-    run._element.get_or_add_rPr().rFonts.set(api["qn"]("w:eastAsia"), "宋体")
+    if name is not None:
+        run._element.get_or_add_rPr().rFonts.set(api["qn"]("w:eastAsia"), "宋体")
 
 
 def _configure_styles(document, api) -> None:
@@ -65,12 +77,15 @@ def _configure_styles(document, api) -> None:
         ("Heading 1", 16, True, HEADING),
         ("Heading 2", 14, True, HEADING),
         ("Heading 3", 12, True, HEADING),
-        ("Caption", 9.5, True, NOTE_LABEL),
+        # 图题/图注不是 Note；保持普通深色文字，天蓝色只属于 callout。
+        ("Caption", 9.5, False, None),
     ):
         style = document.styles[name]
         style.font.name = "Times New Roman"
         style.font.size = Pt(size)
         style.font.bold = bold
+        if name == "Caption":
+            style.font.italic = True
         style._element.rPr.rFonts.set(qn("w:eastAsia"), "宋体")
         if color:
             style.font.color.rgb = RGBColor.from_string(color)
@@ -86,7 +101,17 @@ def _configure_page(document, api) -> None:
     section.right_margin = api["Cm"](2.0)
 
 
-def _bookmark(paragraph, name: str, text: str, bookmark_id: int, api, *, color: str | None = None, bold: bool = False, size: float = 11.5):
+def _bookmark(
+    paragraph,
+    name: str,
+    text: str,
+    bookmark_id: int,
+    api,
+    *,
+    color: str | None = None,
+    bold: bool | None = None,
+    size: float | None = None,
+):
     """Append a visible slot marker wrapped in a stable Word bookmark."""
     qn, OxmlElement = api["qn"], api["OxmlElement"]
     start = OxmlElement("w:bookmarkStart")
@@ -124,38 +149,24 @@ def _slot(document, bookmarks, marker: str, bookmark_name: str, *, style: str | 
     return paragraph
 
 
-def _paragraph_shading_and_border(paragraph, api, *, color: str = NOTE_BORDER, fill: str = NOTE_FILL) -> None:
-    """Apply the standard Note properties at paragraph level as a fallback."""
-    qn, OxmlElement = api["qn"], api["OxmlElement"]
+def _clear_figure_paragraph_box(paragraph, api) -> None:
+    """图件段落保持透明、无边框和无额外缩进；图片只按版心等比缩放。"""
+    qn = api["qn"]
     ppr = paragraph._p.get_or_add_pPr()
-    if ppr.find(qn("w:keepLines")) is None:
-        ppr.append(OxmlElement("w:keepLines"))
-    borders = ppr.find(qn("w:pBdr"))
-    if borders is None:
-        borders = OxmlElement("w:pBdr")
-        ppr.append(borders)
-    for edge in ("top", "left", "bottom", "right"):
-        node = borders.find(qn(f"w:{edge}"))
-        if node is None:
-            node = OxmlElement(f"w:{edge}")
-            borders.append(node)
-        for key, value in (("val", "single"), ("sz", "8"), ("space", "6"), ("color", color)):
-            _set(node, qn, key, value)
-    shading = ppr.find(qn("w:shd"))
-    if shading is None:
-        shading = OxmlElement("w:shd")
-        ppr.append(shading)
-    _set(shading, qn, "val", "clear")
-    _set(shading, qn, "fill", fill)
-    indent = ppr.find(qn("w:ind"))
-    if indent is None:
-        indent = OxmlElement("w:ind")
-        ppr.append(indent)
-    _set(indent, qn, "left", "200")
-    _set(indent, qn, "right", "200")
+    for name in ("pBdr", "shd", "ind"):
+        node = ppr.find(qn(f"w:{name}"))
+        if node is not None:
+            ppr.remove(node)
 
 
-def _cell_box(cell, api, *, color: str = NOTE_BORDER, fill: str = NOTE_FILL) -> None:
+def _cell_box(
+    cell,
+    api,
+    *,
+    color: str = NOTE_BORDER,
+    fill: str = NOTE_FILL,
+    left_size: str = "8",
+) -> None:
     """Write exact fill and four borders on a table cell."""
     qn, OxmlElement = api["qn"], api["OxmlElement"]
     tcpr = cell._tc.get_or_add_tcPr()
@@ -174,12 +185,41 @@ def _cell_box(cell, api, *, color: str = NOTE_BORDER, fill: str = NOTE_FILL) -> 
         if node is None:
             node = OxmlElement(f"w:{edge}")
             borders.append(node)
-        for key, value in (("val", "single"), ("sz", "8"), ("space", "0"), ("color", color)):
+        size = left_size if edge == "left" else "8"
+        for key, value in (("val", "single"), ("sz", size), ("space", "0"), ("color", color)):
             _set(node, qn, key, value)
     parent = cell._tc.getparent()
     trpr = parent.get_or_add_trPr()
     if trpr.find(qn("w:cantSplit")) is None:
         trpr.append(OxmlElement("w:cantSplit"))
+
+
+def _note_table_borders(table, api, *, color: str = NOTE_BORDER, left_size: str = "16") -> None:
+    """在 Note table 层声明外框；insideH/insideV 不画分隔线，接近 DEGs callout。"""
+    qn, OxmlElement = api["qn"], api["OxmlElement"]
+    # python-docx 的 CT_Tbl 没有 get_or_add_tblPr；新表总会带 tblPr。
+    tblpr = table._tbl.tblPr
+    if tblpr is None:  # pragma: no cover - 防御自定义旧模板代理
+        tblpr = OxmlElement("w:tblPr")
+        table._tbl.insert(0, tblpr)
+    borders = tblpr.find(qn("w:tblBorders"))
+    if borders is None:
+        borders = OxmlElement("w:tblBorders")
+        tblpr.append(borders)
+    for edge in ("top", "left", "bottom", "right"):
+        node = borders.find(qn(f"w:{edge}"))
+        if node is None:
+            node = OxmlElement(f"w:{edge}")
+            borders.append(node)
+        size = left_size if edge == "left" else "8"
+        for key, value in (("val", "single"), ("sz", size), ("space", "0"), ("color", color)):
+            _set(node, qn, key, value)
+    for edge in ("insideH", "insideV"):
+        node = borders.find(qn(f"w:{edge}"))
+        if node is None:
+            node = OxmlElement(f"w:{edge}")
+            borders.append(node)
+        _set(node, qn, "val", "nil")
 
 
 def _cell_margins(cell, api, value: str = "120") -> None:
@@ -228,7 +268,14 @@ def _style_table(table, api, *, header=True, alignments=None) -> None:
                 if alignments and index > 0:
                     paragraph.alignment = alignments[min(column, len(alignments) - 1)]
                 for run in paragraph.runs:
-                    _run_font(run, api, size=10.5, bold=index == 0, color=HEADING if index == 0 else None)
+                    _run_font(
+                        run,
+                        api,
+                        size=10.5,
+                        bold=index == 0,
+                        color=HEADING if index == 0 else None,
+                        name="Times New Roman",
+                    )
 
 
 def _set_table_widths(table, api, widths_cm: tuple[float, ...]) -> None:
@@ -240,19 +287,23 @@ def _set_table_widths(table, api, widths_cm: tuple[float, ...]) -> None:
 
 
 def _add_note(document, bookmarks, api):
-    """Add one visible one-cell sky-blue Note with a replaceable body slot."""
-    table = document.add_table(rows=1, cols=1)
+    """添加独立的两行 Note callout；颜色只写入 callout table 的单元格。"""
+    table = document.add_table(rows=2, cols=1)
     table.alignment = api["WD_TABLE_ALIGNMENT"].CENTER
-    table.autofit = True
-    cell = table.cell(0, 0)
-    cell.vertical_alignment = api["WD_CELL_VERTICAL_ALIGNMENT"].CENTER
-    _cell_box(cell, api)
-    _cell_margins(cell, api)
-    paragraph = cell.paragraphs[0]
-    _paragraph_shading_and_border(paragraph, api)
-    label = paragraph.add_run("Note：")
-    _run_font(label, api, color=NOTE_LABEL, bold=True)
-    bookmarks.add(paragraph, "slot_note_direction", "[[NOTE:DIRECTION]]")
+    table.autofit = False
+    _note_table_borders(table, api, left_size="16")
+    for row in table.rows:
+        _row_rules(row, api)
+        cell = row.cells[0]
+        cell.vertical_alignment = api["WD_CELL_VERTICAL_ALIGNMENT"].CENTER
+        _cell_box(cell, api, left_size="16")
+        _cell_margins(cell, api)
+    label_paragraph = table.cell(0, 0).paragraphs[0]
+    # 使用可移植文字标签；不依赖外部图标字体，避免目标阅读器出现 tofu。
+    label = label_paragraph.add_run("Note：")
+    _run_font(label, api, color=NOTE_LABEL, bold=True, name="Times New Roman")
+    body_paragraph = table.cell(1, 0).paragraphs[0]
+    bookmarks.add(body_paragraph, "slot_note_direction", "[[NOTE:DIRECTION]]")
     return table
 
 
@@ -268,12 +319,10 @@ def _add_figure_block(document, bookmarks, api, figure_id: str = "F1", number: i
     bookmarks.add(heading, f"slot_figure_{figure_id.lower()}_title", f"[[FIGURE:{figure_id}.TITLE]]")
     source = document.add_paragraph()
     source.alignment = api["WD_ALIGN_PARAGRAPH"].CENTER
-    # The marker is replaced by the complete source image.  A renderer may
-    # clone this whole three-paragraph block for F2…Fn when the pack publishes
-    # additional figures; absent figures remove the block rather than emit an
-    # empty chapter or fake image.
+    # 该标记由完整源图替换；有更多图件时，renderer 复制整个三段图块，
+    # 没有图件时删除整块，不保留空章节或占位图。
     bookmarks.add(source, f"slot_figure_{figure_id.lower()}_source", f"[[FIGURE:{figure_id}.SOURCE]]")
-    _paragraph_shading_and_border(source, api, color="B7C9D6", fill="F4F8FA")
+    _clear_figure_paragraph_box(source, api)
     _keep_next(source, api)
     caption = _add_caption(document, bookmarks, figure_id)
     _keep_next(heading, api)
@@ -346,34 +395,43 @@ def build_report_template(api):
     metadata.add_run("读者：").bold = True
     bookmarks.add(metadata, "slot_report_audience", "[[REPORT_AUDIENCE]]")
 
-    for heading, marker, name in (
-        ("摘要", "[[REPORT_SUMMARY]]", "slot_report_summary"),
-        ("数据范围与分析边界", "[[ANALYSIS_SCOPE]]", "slot_analysis_scope"),
-        ("材料与方法", "[[ANALYSIS_METHOD]]", "slot_analysis_method"),
-        ("质控与异常", "[[ANALYSIS_QC]]", "slot_analysis_qc"),
-        ("分析结果与解读", "[[ANALYSIS_RESULT]]", "slot_analysis_result"),
+    for heading, prose, marker, name in (
+        ("摘要", "本报告概述本次分析的对象、方法、主要结果和适用范围。", "[[REPORT_SUMMARY]]", "slot_report_summary"),
+        ("数据范围与分析边界", "纳入数据、推断单位、比较方向和适用边界如下。", "[[ANALYSIS_SCOPE]]", "slot_analysis_scope"),
+        ("材料与方法", "本次分析使用已批准的输入、方法和参数。", "[[ANALYSIS_METHOD]]", "slot_analysis_method"),
+        ("质控与异常", "以下列出可核对的质量控制事实及其对解释的影响。", "[[ANALYSIS_QC]]", "slot_analysis_qc"),
+        ("分析结果与解读", "结果按分析点的公开顺序呈现，先给结论，再给数字证据和解释边界。", "[[ANALYSIS_RESULT]]", "slot_analysis_result"),
     ):
         _add_heading(document, heading, 1)
-        _slot(document, bookmarks, marker, name)
+        paragraph = document.add_paragraph()
+        paragraph.add_run(prose + " ")
+        bookmarks.add(paragraph, name, marker)
         if heading == "分析结果与解读":
             _add_note(document, bookmarks, api)
             _add_result_table(document, bookmarks, api)
+            # Figure 是结果内容单元，置于综合结论之前；无真实图件时由
+            # renderer 删除整个图块，不留下空标题或占位图。
+            _add_heading(document, "图件", 2)
+            _add_figure_block(document, bookmarks, api, "F1", 1)
 
     _add_heading(document, "综合结论", 1)
-    _slot(document, bookmarks, "[[ANALYSIS_CONCLUSION]]", "slot_analysis_conclusion")
-
-    _add_heading(document, "图件", 1)
-    _add_figure_block(document, bookmarks, api, "F1", 1)
+    paragraph = document.add_paragraph()
+    paragraph.add_run("综合结论仅回收上文已确认的结果。 ")
+    bookmarks.add(paragraph, "slot_analysis_conclusion", "[[ANALYSIS_CONCLUSION]]")
 
     _add_heading(document, "局限、未完成与待验证", 1)
-    _slot(document, bookmarks, "[[ANALYSIS_LIMITATIONS]]", "slot_analysis_limitations")
+    paragraph = document.add_paragraph()
+    paragraph.add_run("下列限制说明结果仍可解释的范围和待验证事项。 ")
+    bookmarks.add(paragraph, "slot_analysis_limitations", "[[ANALYSIS_LIMITATIONS]]")
 
     _add_heading(document, "输出文件说明", 1)
     _slot(document, bookmarks, "[[OUTPUTS_INTRO]]", "slot_outputs_intro")
     _add_output_table(document, bookmarks, api)
 
     _add_heading(document, "参考文献", 1)
-    _slot(document, bookmarks, "[[REFERENCES]]", "slot_references")
+    paragraph = document.add_paragraph()
+    paragraph.add_run("本报告实际使用的来源如下。 ")
+    bookmarks.add(paragraph, "slot_references", "[[REFERENCES]]")
 
     _add_heading(document, "软件与资源版本", 1)
     _add_version_table(document, bookmarks, api)

@@ -1,49 +1,50 @@
-# analysis_evidence_pack v0.1 handoff
+# analysis_evidence_pack v0.1.0
 
-这是 code 与 report adapter 之间的共享机器协议，不是运行时配置，也不是报告模板；它属于开发/验收控制面，
-不放入公开 `result/`，也不作为报告输出文件。
-代码层只写已经执行并能回溯的事实；报告层可在自己的合同中组织章节和自然语言。
+这是 code coder 与 report coder 共用的事实交接包。它属于开发/验收控制面，不是配置文件、报告模板或公开
+业务产物；正式运行事实仍写入 `log/run_record.json`，pack 不能放入 `result/`。
 
-## 最小字段
+## 顶层字段
 
-```json
-{
-  "schema_version": "0.1.0",
-  "module": "example",
-  "quality_profile": "draft",
-  "result_layout": "flat",
-  "evidence_targets": [{"id": "ET-01", "title": "声明式分析目标"}],
-  "analysis_points": [{
-    "id": "AP-01",
-    "title": "声明式分析主题",
-    "scope": "数据与对象范围",
-    "qc": "输入和质量控制事实",
-    "inputs": [{"id": "IN-01", "path": "input/input.tsv", "identity": "dataset-id"}],
-    "method": {"name": "method", "version": "1.0", "citation": "official source"},
-    "parameters": {"threshold": "actual expression"},
-    "statistical_unit": "sample",
-    "comparison": {"target": "case", "reference": "control", "metric": "effect", "direction": "case - control"},
-    "results": [{"name": "n", "value": 1, "unit": "item", "source": "result/01.result.csv"}],
-    "outputs": [{"id": "OUT-01", "path": "result/01.result.csv", "kind": "table", "published": true}],
-    "figure_table_refs": [],
-    "interpretation_level": "descriptive",
-    "interpretation": "仅写已执行数据支持的事实",
-    "next_step": "明确的后续验证",
-    "limitations": ["本次数据范围"],
-    "status": "complete"
-  }]
-}
+必须有：
+
+```text
+schema_version / module / quality_profile / result_layout / evidence_targets / analysis_points
 ```
 
-新建或重写模块的 `result_layout` 固定为 `flat`，要求 `result/` 单层编号路径。
-迁移旧模块时可在审定记录中登记既有 `module_contract` 路径，最终仍须迁移到平铺合同，不能把它当作新输出的
-另一套默认。`status` 使用 `complete`、`valid_no_findings`、
-`evidence_missing` 或 `blocked`；后两者可在 draft 暴露缺口，但 final 必须阻断。
+其中 `result_layout` 在 v2.2 固定为 `flat`，`evidence_targets` 使用陈述式标题并映射
+`analysis_point_ids`。可选字段为 `title`、`audience`、`terminology_sources`、`references`、
+`versions`、`notes`、`result_table`、`output_table`、`version_table`。
 
-每个结果项带 `name/value/unit/source`，每个输出项带 `id/path/kind/published/purpose/consumers`，路径相对
-模块根且指向真实产物。`qc`、`statistical_unit`、`comparison` 和解释字段只在该分析
-适用时声明；一旦声明就必须完整且可核对。`references`/`versions` 使用
-`{name, version, source?, purpose?}`，并与 source review 中的官方资料和实际环境一致。
+## analysis_points[]
 
-不要在 pack 中写读者问句、任务句、占位符、因果/疗效结论或未执行数字；这些是报告
-适配器和科学负责人另行处理的内容。代码 validator 不替报告 validator 做章节或 DOCX 检查。
+每项至少记录：
+
+```text
+id / title / scope / inputs / method / parameters / results / outputs /
+figure_table_refs / limitations / status
+```
+
+适用时增加 `qc`、`statistical_unit`、`comparison`、`interpretation_level`、
+`interpretation`、`next_step` 和 `notes`。
+
+- `inputs[]`：`id/path/identity`，以及适用的类型、单位、方向；路径相对模块根。
+- `method`：实际方法和版本，适用时带引用；不能用软件宣传文字替代执行事实。
+- `comparison`：有向比较必须写 `target/reference/direction`，并明确 `metric = target − reference`。
+- `results[]`：`name/value/unit/source`；数字、精度和统计口径能回到实际结果表。
+- `outputs[]`：`id/path/kind/published/purpose/consumers`；只有有消费者的业务文件进入报告。
+- `figure_table_refs[]`：`id/kind/path/caption`；图注字段来自 plot provenance，不能从图片外观猜。
+- `notes[]`：仅在真实方向、单位/变换或边界易被误读时记录 `id/title/text/kind`；不写泛化占位。
+- `status`：`complete`、`valid_no_findings`、`evidence_missing` 或 `blocked`。
+  release 只接受前两者；`valid_no_findings` 可保留合同要求的表头空表，但不生成假图或假行。
+- `interpretation_level`：`descriptive`、`association`、`prediction`、`candidate` 或
+  `mechanistic_hint`，限制可见结论强度。
+
+## 路径与交接
+
+renderer 先校验 Schema、相对路径、文件存在性、ID、方向、单位和 provenance，再写隔离工作副本。
+v2.2 公开结果示例为 `result/01.DEG_all.csv`、`result/01.DEG_sig.csv`、
+`result/02.volcano.png`、`result/02.volcano.pdf`；同一逻辑图多格式并列，不创建无消费者的
+filtered/top/gene-list 副本。
+
+官方 URL/DOI 只保存在 source review、references 或内部交接中，不自动写入正文。旧
+`reader_questions` 只能在迁移输入中出现，必须先转换成陈述式 target；无法安全转换就阻断。

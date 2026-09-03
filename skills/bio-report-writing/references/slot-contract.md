@@ -34,7 +34,7 @@ renderer 按 typed slot 填入。**字段名、类型、来源、条件和空值
 | `FIGURE:F1.SOURCE` / `[[FIGURE:F1.SOURCE]]` | `figure.F1.source` | relative path | published PNG/PDF + plot provenance | 当前产物存在时出现；缺失即省略或阻断 |
 | `FIGURE:F1.CAPTION` / `[[FIGURE:F1.CAPTION]]` | `figure.F1.caption` | declarative text | fixed caption builder | 与 source 成对出现 |
 | `slot_table_outputs_caption` / `[[TABLE:OUTPUTS.CAPTION]]` | `output_table[]` | typed rows | 当前发布树 + consumers | 必须列所有公开业务文件 |
-| `REFERENCES` / `[[REFERENCES]]` | `report.references` | typed rows | 实际术语/方法/资源来源 | 正文实际引用闭合 |
+| `REFERENCES` / `[[REFERENCES]]` | `report.references` | typed rows | 实际术语/方法/资源来源 | 正文实际引用闭合；URL/DOI 只留内部来源记录 |
 | `slot_table_versions_caption` / `[[TABLE:VERSIONS.CAPTION]]` | `version_table[]` | typed rows | calculation/plot/report provenance | 必须存在且是最后可见块 |
 
 ## 动态字段形状
@@ -44,8 +44,10 @@ renderer 按 typed slot 填入。**字段名、类型、来源、条件和空值
 每项至少有 `id`、`title`、`text`、`kind`、`border`、`fill`、`label_color`。`kind` 取
 `direction`、`unit`、`boundary` 或 `interpretation`；`text` 只陈述实际口径。
 默认三色为 `border=#5B9BD5`、`fill=#DDEBF7`、`label_color=#2F75B5`。renderer 应把颜色写入
-模板样式/OOXML，不把十六进制值写入可见正文；无色打印仍必须有标签和完整文字。
-模板至少预置方向 Note；需要单位、边界或解释 Note 时，复制同一独立框体并使用稳定的
+模板的 callout 组件/OOXML，不把十六进制值写入可见正文；无色打印仍必须有标签和完整文字。
+Note callout 与 Figure source 段落分开实现：前者可有独立标签行、正文行和 cell border/fill，后者只放
+完整 drawing，不带段落边框、底色或缩进。没有真实 notes[] 时删除整个 callout，不保留泛化提示句。
+模板预置可删除的方向 Note 锚点；需要单位、边界或解释 Note 时，复制同一独立框体并使用稳定的
 `[[NOTE:<KIND>]]` marker/对应 bookmark，按首次相关结果顺序渲染。
 
 ### `result_table`

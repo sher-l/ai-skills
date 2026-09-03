@@ -6,12 +6,27 @@
 # 参数与随机种子：写明每个阈值、contrast 和随机种子。
 
 args <- commandArgs(trailingOnly = TRUE)
-if (length(args) < 1L) stop("usage: r_stage.R CONFIG", call. = FALSE)
-config_path <- normalizePath(args[[1L]], mustWork = TRUE)
+if (length(args) < 1L) {
+  cat("错误类型: INPUT_ERROR\n错误内容: 未提供配置文件\n修复建议: 使用 run.sh <stage> -c module.config.ini\n退出码: 2\n", file = stderr())
+  quit(status = 2)
+}
+raw_stage_config <- path.expand(args[[1L]])
+if (!file.exists(raw_stage_config)) {
+  cat("错误类型: INPUT_ERROR\n错误内容: 配置文件不存在\n修复建议: 检查 module.config.ini 路径和权限\n退出码: 2\n", file = stderr())
+  quit(status = 2)
+}
+config_path <- normalizePath(raw_stage_config, mustWork = TRUE)
 config_dir <- dirname(config_path)
+output_arg <- which(args == "--output")
+output_dir <- if (length(output_arg) && output_arg[[1L]] < length(args)) {
+  normalizePath(args[[output_arg[[1L]] + 1L]], mustWork = FALSE)
+} else {
+  config_dir
+}
 
-# 所有相对路径均从 config_dir 解析；加载 Scientific Core 前先校验输入。
+# 所有相对路径均从 config_dir 解析；加载科学核心代码前先校验输入。
 # 每次过滤或对齐都记录 before/after 计数。
 # set.seed(<FROZEN_SEED>)  # 仅在合同已记录固定随机种子后取消注释
 
-stop("EVIDENCE_NEEDED：请实现已批准的科学阶段", call. = FALSE)
+cat("错误类型: EVIDENCE_ERROR\n错误内容: 当前阶段仍是脚手架，尚未接入已批准的科学逻辑\n修复建议: 按 code_contract 填写真实输入、方法、产物和非退化检查后重试\n退出码: 2\n", file = stderr())
+quit(status = 2)

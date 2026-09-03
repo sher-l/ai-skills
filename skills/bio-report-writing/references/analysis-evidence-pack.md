@@ -1,61 +1,50 @@
-# `analysis_evidence_pack` v0.1.0：报告事实包
+# analysis_evidence_pack v0.1.0
 
-报告侧复用 `bio-code-standard` 交接的事实 schema，不另造叙事 schema。pack 是事实来源，不是正文模板；
-renderer 必须把字段显式映射到固定 slot，不能遍历任意 key 自动生成客户段落。
+这是 code coder 与 report coder 共用的事实交接包。它属于开发/验收控制面，不是配置文件、报告模板或公开
+业务产物；正式运行事实仍写入 `log/run_record.json`，pack 不能放入 `result/`。
 
 ## 顶层字段
 
-| 字段 | 用途 | 报告映射 |
-|---|---|---|
-| `module` | 模块身份 | 内部校验、标题上下文 |
-| `quality_profile` | `draft` 或 `release` | 决定状态和门禁 |
-| `result_layout` | 新建/重写固定为 `flat` | 解析 `result/` 编号文件 |
-| `title` | 批准的分析标题 | `report.title` |
-| `audience` | 主要读者及决策场景 | Gate 1；必要时摘要范围 |
-| `terminology_sources` | 采用的术语来源 | Gate 1、参考文献/内部映射 |
-| `references` | 方法、术语、数据库和资源来源 | `references`、版本表 |
-| `versions` | 实际软件/资源版本 | `version_table` |
-| `evidence_targets` | 陈述式交付目标 | 结果章节与覆盖矩阵 |
-| `analysis_points` | 每个分析点的事实集合 | scope/method/result/figure/output/limit slots |
+必须有：
 
-`terminology_sources` 是当前 schema 的可选字段；旧 `reader_questions` 仅可作为迁移别名，必须先转换为
-不带问号的陈述式 `evidence_targets`，且 release pack 不得保留该旧字段。
+```text
+schema_version / module / quality_profile / result_layout / evidence_targets / analysis_points
+```
 
-## `analysis_points[]` 最小事实
+其中 `result_layout` 在 v2.2 固定为 `flat`，`evidence_targets` 使用陈述式标题并映射
+`analysis_point_ids`。可选字段为 `title`、`audience`、`terminology_sources`、`references`、
+`versions`、`notes`、`result_table`、`output_table`、`version_table`。
 
-每项至少包含：
+## analysis_points[]
+
+每项至少记录：
 
 ```text
 id / title / scope / inputs / method / parameters / results / outputs /
-figure_table_refs / notes(适用时) / limitations / status
+figure_table_refs / limitations / status
 ```
 
-适用时再声明 `qc`、`statistical_unit`、`comparison`、`interpretation_level`、`interpretation` 和
-`next_step`。报告不能从缺失字段推测默认值。
+适用时增加 `qc`、`statistical_unit`、`comparison`、`interpretation_level`、
+`interpretation`、`next_step` 和 `notes`。
 
-- `inputs[]`：`id/path/identity`，适用时有 kind、unit、orientation；路径相对 input root。
-- `method`：至少 `name/version`，有 citation 时一并呈现。
-- `comparison`：`target/reference/direction` 必须明确；若有 metric，写出
-  `metric = target − reference`。
-- `results[]`：`name/value/unit/source`；数字能回到真实结果表，保持原单位、精度和统计口径。
-- `outputs[]`：`id/path/kind/published/purpose/consumers`；只有 `published=true` 且有消费者的业务文件
-  进入公开输出表。
-- `figure_table_refs[]`：唯一 `id/kind/path/caption`；图的完整 caption 字段由 renderer 从 plot provenance
-  映射，不从外观猜。
-- `notes[]`：适用时为 `id/title/text/kind/border/fill/label_color`；`kind` 取 `direction`、`unit`、
-  `boundary` 或 `interpretation`，三色必须为 `#5B9BD5/#DDEBF7/#2F75B5`。
-- `status`：`complete`、`valid_no_findings`、`evidence_missing` 或 `blocked`；release 只接受前两者。
-- `interpretation_level`：`descriptive`、`association`、`prediction`、`candidate` 或 `mechanistic_hint`，
-  决定正文可用的结论强度。
+- `inputs[]`：`id/path/identity`，以及适用的类型、单位、方向；路径相对模块根。
+- `method`：实际方法和版本，适用时带引用；不能用软件宣传文字替代执行事实。
+- `comparison`：有向比较必须写 `target/reference/direction`，并明确 `metric = target − reference`。
+- `results[]`：`name/value/unit/source`；数字、精度和统计口径能回到实际结果表。
+- `outputs[]`：`id/path/kind/published/purpose/consumers`；只有有消费者的业务文件进入报告。
+- `figure_table_refs[]`：`id/kind/path/caption`；图注字段来自 plot provenance，不能从图片外观猜。
+- `notes[]`：仅在真实方向、单位/变换或边界易被误读时记录 `id/title/text/kind`；不写泛化占位。
+- `status`：`complete`、`valid_no_findings`、`evidence_missing` 或 `blocked`。
+  release 只接受前两者；`valid_no_findings` 可保留合同要求的表头空表，但不生成假图或假行。
+- `interpretation_level`：`descriptive`、`association`、`prediction`、`candidate` 或
+  `mechanistic_hint`，限制可见结论强度。
 
-## 路径、状态与可复核性
+## 路径与交接
 
-renderer 先检查所有相对路径存在且未越过 input root，再写隔离工作目录；正式 `result/` 只保留当前合同
-声明的编号业务文件，例如 `01.DEG_all.csv`、`01.DEG_sig.csv`、`02.volcano.png`、`02.volcano.pdf`。
-报告不创建无消费者的 filtered/top/gene-list 副本，也不把报告、日志、cache、hash 或 provenance 当作
-业务输出。
+renderer 先校验 Schema、相对路径、文件存在性、ID、方向、单位和 provenance，再写隔离工作副本。
+v2.2 公开结果示例为 `result/01.DEG_all.csv`、`result/01.DEG_sig.csv`、
+`result/02.volcano.png`、`result/02.volcano.pdf`；同一逻辑图多格式并列，不创建无消费者的
+filtered/top/gene-list 副本。
 
-`evidence_missing` 允许初始化草稿，但机器门必须返回 `DRAFT`/`EVIDENCE_NEEDED` 和非零；
-`valid_no_findings` 保持成功状态，按 [report-contract.md](report-contract.md) 的空结果分支渲染，不生成
-假图、假行或候选。Schema 与示例位于 `assets/analysis_evidence_pack.schema.json` 和
-`assets/analysis_evidence_pack.example.json`。
+官方 URL/DOI 只保存在 source review、references 或内部交接中；renderer 的可见 references 只显示来源名称、版本和用途，不自动写入正文。旧
+`reader_questions` 只能在迁移输入中出现，必须先转换成陈述式 target；无法安全转换就阻断。

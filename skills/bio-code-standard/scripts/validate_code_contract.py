@@ -65,7 +65,7 @@ def validate_contract(value: object, *, final: bool = False) -> list[str]:
         "effort_profile", "max_repair_rounds", "result_layout", "canonical_source",
         "stages", "inputs", "outputs", "evidence_pack",
     }
-    optional = {"source_review", "statistics", "plot", "environment", "provenance"}
+    optional = {"source_review", "statistics", "plot", "report", "full", "environment", "provenance"}
     extra = sorted(set(value) - required - optional)
     for key in extra:
         fail(errors, f"unknown top-level field: {key}")
@@ -79,10 +79,8 @@ def validate_contract(value: object, *, final: bool = False) -> list[str]:
         fail(errors, "effort_profile must be mechanical or scientific_review")
     if type(value.get("max_repair_rounds")) is not int or not 0 <= value["max_repair_rounds"] <= 2:
         fail(errors, "max_repair_rounds must be an integer from 0 to 2")
-    if value.get("result_layout") not in {"flat", "module_contract"}:
-        fail(errors, "result_layout must be flat or module_contract")
-    if final and value.get("result_layout") != "flat":
-        fail(errors, "release result_layout must be flat; migrate the historical module_contract layout first")
+    if value.get("result_layout") != "flat":
+        fail(errors, "v2.2 result_layout must be flat; record historical nested paths only in migration evidence")
     for key in ("module", "description", "canonical_source", "evidence_pack"):
         if not isinstance(value.get(key), str) or not value[key].strip():
             fail(errors, f"{key} must be a non-empty string")
@@ -108,7 +106,7 @@ def validate_contract(value: object, *, final: bool = False) -> list[str]:
             if not isinstance(stage, dict):
                 fail(errors, f"stages[{index}] must be an object")
                 continue
-            stage_extra = sorted(set(stage) - {"id", "purpose", "inputs", "outputs", "method", "parameters", "seed", "non_degenerate", "provenance", "lineage", "error_policy"})
+            stage_extra = sorted(set(stage) - {"id", "purpose", "inputs", "outputs", "method", "parameters", "seed", "non_degenerate", "provenance", "lineage", "error_policy", "log"})
             for key in stage_extra:
                 fail(errors, f"stages[{index}] unknown field: {key}")
             for key in ("id", "purpose", "inputs", "outputs", "method", "parameters", "seed", "non_degenerate"):
@@ -135,6 +133,14 @@ def validate_contract(value: object, *, final: bool = False) -> list[str]:
                             fail(errors, f"stages[{index}].outputs[{output_index}] public result path must be directly under result/: {item['path']}")
                         elif not RESULT_NAME.fullmatch(path.name):
                             fail(errors, f"stages[{index}].outputs[{output_index}] result filename must use NN.semantic_name.ext: {item['path']}")
+            stage_log = stage.get("log")
+            if stage_log is not None:
+                if not isinstance(stage_log, str) or not stage_log.strip() or Path(stage_log).is_absolute() or ".." in Path(stage_log).parts:
+                    fail(errors, f"stages[{index}].log must be a relative path")
+                elif stage_id == "init":
+                    fail(errors, "init stage must not declare a stage log")
+                elif stage_id in {"calculate", "plot", "report", "full"} and Path(stage_log).as_posix() != f"log/{stage_id}.log":
+                    fail(errors, f"stages[{index}].log must be log/{stage_id}.log")
     for key in ("inputs", "outputs"):
         if not isinstance(value.get(key), list):
             fail(errors, f"{key} must be an array")
@@ -179,6 +185,57 @@ def validate_contract(value: object, *, final: bool = False) -> list[str]:
         or not plot["figure_manifest"].strip()
     ):
         fail(errors, "plot.figure_manifest must be a non-empty string when plot is declared")
+    report = value.get("report")
+    if report is not None:
+        if not isinstance(report, dict):
+            fail(errors, "report must be an object when declared")
+        else:
+            for key in sorted(set(report) - {"inputs"}):
+                fail(errors, f"report unknown field: {key}")
+            if not isinstance(report.get("inputs"), list) or any(not isinstance(item, str) or not item.strip() for item in report.get("inputs", [])):
+                fail(errors, "report.inputs must be a non-empty string array")
+            elif set(report["inputs"]) != {"calculate", "plot"}:
+                fail(errors, "report.inputs must list calculate and plot")
+    full = value.get("full")
+    if full is not None:
+        if not isinstance(full, dict):
+            fail(errors, "full must be an object when declared")
+        else:
+            for key in sorted(set(full) - {"expands_to"}):
+                fail(errors, f"full unknown field: {key}")
+            if full.get("expands_to") != ["calculate", "plot", "report"]:
+                fail(errors, "full.expands_to must be calculate, plot, report in order")
+    # 五阶段按固定顺序声明；calculate 子步骤可使用 calculate/ 前缀。
+    if isinstance(stages, list):
+        stage_ids = [item.get("id") for item in stages if isinstance(item, dict) and isinstance(item.get("id"), str)]
+        canonical_order = ["init", "calculate", "plot", "report", "full"]
+        stage_kinds_in_order = [item if item in set(canonical_order) else item.split("/", 1)[0] for item in stage_ids]
+        stage_kinds = set(stage_kinds_in_order)
+        observed_order = []
+        for kind in stage_kinds_in_order:
+            if kind in canonical_order and kind not in observed_order:
+                observed_order.append(kind)
+        expected_order = sorted(observed_order, key=canonical_order.index)
+        if observed_order != expected_order:
+            fail(errors, "stages must be ordered init → calculate → plot → report → full")
+        if "plot" in stage_kinds and "calculate" not in stage_kinds:
+            fail(errors, "plot stage requires calculate stage")
+        if "report" in stage_kinds and not {"calculate", "plot"}.issubset(stage_kinds):
+            fail(errors, "report stage requires calculate and plot stages")
+        if "full" in stage_kinds and not {"calculate", "plot", "report"}.issubset(stage_kinds):
+            fail(errors, "full stage requires calculate, plot and report stages")
+        if "full" in stage_kinds and value.get("full") is not None and value["full"].get("expands_to") != ["calculate", "plot", "report"]:
+            fail(errors, "full must expand only calculate, plot, report; init is excluded")
+        if final:
+            missing = sorted({"init", "calculate", "plot", "report", "full"} - stage_kinds, key=("init", "calculate", "plot", "report", "full").index)
+            if missing:
+                fail(errors, f"final v2.2 contract requires stages: {', '.join(missing)}")
+            if "plot" in stage_kinds and value.get("plot") is None:
+                fail(errors, "plot stage requires a plot.figure_manifest declaration")
+            if "report" in stage_kinds and value.get("report") is None:
+                fail(errors, "report stage requires a report declaration")
+            if "full" in stage_kinds and value.get("full") is None:
+                fail(errors, "full stage requires a full.expands_to declaration")
     help_value = value.get("help")
     if not isinstance(help_value, dict):
         fail(errors, "help must be an object with command descriptions")
@@ -350,7 +407,6 @@ def main(argv: list[str] | None = None) -> int:
             errors,
             warnings,
             domain="contract",
-            fixes="编辑标记的合同或源码后重新运行校验",
         )
     return code
 

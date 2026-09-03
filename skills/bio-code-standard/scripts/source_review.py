@@ -25,7 +25,7 @@ SKIP_DIRS = {
     "report", "output", "doc", "docs", ".code-contract", "node_modules",
 }
 PLACEHOLDER = re.compile(
-    r"(?:\b(?:TODO|TBD|REPLACE|PENDING|EVIDENCE_REQUIRED|ADD|UNKNOWN)\b|\[\s*(?:fill|add|path|url|date|claim)[^\]]*\])",
+    r"(?:\b(?:TODO|TBD|REPLACE|PENDING|EVIDENCE_REQUIRED|ADD|UNKNOWN)\b|填写|待补充|占位|\[\s*(?:fill|add|path|url|date|claim)[^\]]*\])",
     re.IGNORECASE,
 )
 SHA256 = re.compile(r"^[0-9a-f]{64}$", re.IGNORECASE)
@@ -82,12 +82,29 @@ def _heading_key(value: str) -> str:
     return re.sub(r"^\d+[.)]\s*", "", value.strip()).casefold()
 
 
+SECTION_ALIASES = {
+    "Source inventory": ("Source inventory", "源码清单"),
+    "Official materials": ("Official materials", "官方资料"),
+    "Execution evidence": ("Execution evidence", "实际执行证据"),
+    "Cross-check matrix": ("Cross-check matrix", "三方交叉核对矩阵"),
+}
+COLUMN_ALIASES = {
+    "路径": "path",
+    "语言": "language",
+    "行数": "lines",
+    "角色": "role",
+    "标题": "title",
+    "适用范围": "scope",
+    "备注": "notes",
+}
+
+
 def _table(lines: list[str], heading: str) -> list[dict[str, str]]:
     """读取二级标题后的第一张 Markdown 表格。"""
     start = None
-    wanted = _heading_key(heading)
+    wanted = {_heading_key(item) for item in SECTION_ALIASES.get(heading, (heading,))}
     for index, line in enumerate(lines):
-        if line.startswith("## ") and _heading_key(line[3:]) == wanted:
+        if line.startswith("## ") and _heading_key(line[3:]) in wanted:
             start = index + 1
             break
     if start is None:
@@ -102,7 +119,7 @@ def _table(lines: list[str], heading: str) -> list[dict[str, str]]:
             break
     if len(table_lines) < 2:
         return []
-    headers = [_cell(item) for item in table_lines[0].strip("|").split("|")]
+    headers = [COLUMN_ALIASES.get(_cell(item), _cell(item)) for item in table_lines[0].strip("|").split("|")]
     if not headers or not all(set(item.replace("-", "")) <= {":", " "} for item in table_lines[1].strip("|").split("|")):
         return []
     rows: list[dict[str, str]] = []
@@ -158,7 +175,12 @@ def validate_document(path: Path, root: Path | None = None, final: bool = False)
         text = path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
         errors = [f"cannot read source review: {exc}"]
-        result = {"status": "BLOCKED", "errors": errors, "warnings": [], "exit_code": diagnostic_output.exit_code(errors, status="BLOCKED", domain="source")}
+        result = {
+            "status": "BLOCKED",
+            "errors": errors,
+            "warnings": [],
+            "exit_code": diagnostic_output.exit_code(errors, status="BLOCKED", domain="source"),
+        }
         result["diagnostics"] = [_diag(errors[0], str(path))]
         result["summary"] = {"errors": 1, "warnings": 0}
         return result
@@ -173,8 +195,9 @@ def validate_document(path: Path, root: Path | None = None, final: bool = False)
         errors.append(f"schema_version must be {SCHEMA_VERSION}")
     if metadata.get("review_status") not in {"DRAFT", "PASS", "DECISION_REQUIRED", "BLOCKED"}:
         errors.append("review_status must be DRAFT, PASS, DECISION_REQUIRED or BLOCKED")
-    for heading in ("Source inventory", "Official materials", "Execution evidence", "Cross-check matrix"):
-        if not any(line.startswith("## ") and _heading_key(line[3:]) == _heading_key(heading) for line in lines):
+    for heading in SECTION_ALIASES:
+        allowed = {_heading_key(item) for item in SECTION_ALIASES[heading]}
+        if not any(line.startswith("## ") and _heading_key(line[3:]) in allowed for line in lines):
             errors.append(f"missing section: {heading}")
 
     inventory = _table(lines, "Source inventory")
@@ -347,7 +370,7 @@ def render_document(module: str, root: Path, output: Path) -> None:
         for item in entries
     )
     today = date.today().isoformat()
-    content = f"""# Source review
+    content = f"""# 源码审查记录
 
 - schema_version: {SCHEMA_VERSION}
 - module: {module}
@@ -359,37 +382,37 @@ def render_document(module: str, root: Path, output: Path) -> None:
 先完成本文件，再修改 calculate/plot 或统计逻辑。所有路径相对模块根目录；
 官方资料必须由分析者实际阅读并填写，脚本不会把搜索结果当作证据。
 
-## Source inventory
+## 源码清单
 
-| path | language | sha256 | lines | role | canonical |
+| 路径 | 语言 | sha256 | 行数 | 角色 | canonical |
 | --- | --- | --- | --- | --- | --- |
 {inventory_rows}
 
-## Official materials
+## 官方资料
 
-| id | title | url | version_or_commit | accessed | scope |
+| id | 标题 | url | version_or_commit | accessed | 适用范围 |
 | --- | --- | --- | --- | --- | --- |
-| OFF-01 | ADD official title | https://official.example/document | version-or-commit | {today} | definition and parameter scope |
+| OFF-01 | 填写官方资料标题 | 待填写官方资料地址 | 填写版本或 commit | {today} | 填写定义和参数适用范围 |
 
 将实际阅读的关键规则和短摘录保存到 `doc/source-review/`（例如
 `doc/source-review/OFF-01.md`），文件中保留 URL/DOI、版本或 commit、访问日期和
 适用范围；不要只留下搜索结果链接。该目录是长期科学资料缓存，不是运行日志或客户输出。
 
-## Execution evidence
+## 实际执行证据
 
-| id | command | run_id | artifact_or_log | status | notes |
+| id | command | run_id | artifact_or_log | status | 备注 |
 | --- | --- | --- | --- | --- | --- |
-| RUN-01 | ADD exact command | ADD run id | ADD relative log/artifact | PENDING | execution evidence is required after implementation |
+| RUN-01 | 填写实际命令 | 填写 run id | 填写相对日志或产物 | PENDING | 实现后必须补充执行证据 |
 
-## Cross-check matrix
+## 三方交叉核对矩阵
 
 每一条关键定义都要同时指向官方资料、源码位置和一次实际执行证据。
 
 | id | claim | official_id | source_path | execution_id | official_definition | source_evidence | execution_evidence | status | decision |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| CK-01 | ADD one testable scientific definition | OFF-01 | ADD/source.R | RUN-01 | ADD exact official definition | ADD function/line and behavior | ADD run/artifact observation | PENDING | ADD decision or rationale |
+| CK-01 | 填写可测试的科学定义 | OFF-01 | 填写源码路径和位置 | RUN-01 | 填写官方精确定义 | 填写函数/行和行为 | 填写运行或产物观察 | PENDING | 填写决策或理由 |
 
-## Decision gate
+## 决策门
 
 - `PASS`：canonical source、官方资料、执行证据和所有交叉核对均完整，且没有 `CONFLICT`。
 - `DECISION_REQUIRED`：任何官方定义、源码实现和执行证据冲突；暂停后续 coder 工作并返回最小决策项。
@@ -412,11 +435,11 @@ def init_command(args: argparse.Namespace) -> int:
         output.relative_to(root)
     except ValueError:
         print("错误类型: INPUT_ERROR\n错误内容: output 必须位于 source root 内: "
-              f"{output}\n修复建议: 将 source-review 文档放到模块根目录的 doc/ 下\n退出码: 2", file=sys.stderr)
+              f"{output}\n修复建议: 将 source-review 文档写入 source root/doc/\n退出码: 2", file=sys.stderr)
         return 2
     if output.exists() and not args.force:
         print("错误类型: OUTPUT_ERROR\n错误内容: 输出文件已存在（审定后才可使用 --force）: "
-              f"{output}\n修复建议: 先备份并确认后使用 --force，或选择新路径\n退出码: 1", file=sys.stderr)
+              f"{output}\n修复建议: 检查现有文档，确认后显式使用 --force\n退出码: 1", file=sys.stderr)
         return 1
     try:
         render_document(args.module, root, output)

@@ -1,4 +1,7 @@
-# calculate / plot 核心合同
+# 阶段、配置与代码核心合同
+
+五阶段的低模型执行边界以 [stage-contract.md](stage-contract.md) 为准；本文件补充
+每个已声明阶段的科学字段和校验要求。
 
 先通过 [source review](source-review.md)，再把已确认的源码行为写成合同。默认
 `effort_profile=mechanical`、最多两轮聚焦修复；科学歧义仅在 scope 明确授权的
@@ -6,7 +9,7 @@
 
 ## 阶段边界
 
-每个 `calculate` 或 `plot` stage 声明：
+每个已声明的 `calculate`、`plot`、`report` 或 `full` stage 声明：
 
 | 字段 | 必填内容 |
 |---|---|
@@ -20,11 +23,18 @@
 | `error_policy` | 必须停止的输入/资源失败、重试和部分状态处理 |
 
 `calculate` 只消费输入或上游发布物并产生科学事实；`plot` 只读取已发布科学表或
-合同声明的 cache，不重算、补猜或覆盖计算对象。没有图能力时省略 plot 合同和 manifest。
+合同声明的 cache，不重算、补猜或覆盖计算对象；`report` 只读取 calculate 事实和
+plot 图件/manifest；`full` 只编排 `calculate → plot → report`，不把 `init` 当作计算步骤。
+标准模块应列出五阶段；若经批准的遗留单阶段模块暂不具备某能力，必须在迁移审查中
+明确记录阻断项，不能由脚手架静默省略或伪造。
+
+`calculate` 可拆成 `scripts/calculate/` 下多个脚本，但必须声明唯一入口和执行顺序。
+阶段日志按调用生成：未调用阶段不创建日志；`full` 不得因为编排而生成 `init` 日志。
 
 ## 配置与数据
 
-- 从配置文件所在目录解析相对路径；`help` 说明每个命令的参数、输出和零副作用；
+- 配置文件固定为模块根目录的 `module.config.ini`（INI）；命令形式为
+  `run.sh <stage> -c module.config.ini`，从配置文件所在目录解析相对路径；`help` 说明每个命令的参数、输出和零副作用；
   配置键必须有唯一消费者，未知键直接报错。
 - 运行时不安装 R/Python 包；解释器、包、数据库、参考资源、源码 commit 和 seed
   写入 provenance。环境合同负责安装，阶段只检查版本。

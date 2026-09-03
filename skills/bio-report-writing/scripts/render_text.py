@@ -126,12 +126,9 @@ def reference_texts(value: object, missing: str = "references") -> str:
         if isinstance(item, Mapping):
             name = scalar(item.get("name", "来源"))
             version = item.get("version")
-            source = item.get("source")
             suffix = []
             if version:
                 suffix.append(f"版本 {scalar(version)}")
-            if source:
-                suffix.append(scalar(source))
             rendered.append(name + (f"（{'；'.join(suffix)}）" if suffix else ""))
         else:
             rendered.append(compact(item, missing))

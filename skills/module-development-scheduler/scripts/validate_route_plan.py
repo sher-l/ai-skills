@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a route plan produced by route_module_task.py."""
+"""校验 route_module_task.py 生成的路由计划。"""
 from __future__ import annotations
 
 import argparse
@@ -156,8 +156,7 @@ def validate(value: Any, subject: str) -> list[str]:
     coder_order = value.get("coder_order")
     checks = value.get("required_checks")
     if adapters is None and isinstance(loaded, list):
-        # Legacy plans included the composition entry in loaded_skills. Treat
-        # it as context, not as a leaf adapter.
+        # 旧计划把组合入口放在 loaded_skills 中；这里只把它视为上下文，不视为叶子 adapter。
         adapters = [item for item in loaded if item != "develop-module"]
     for field in ("adapter_skills", "execution_order", "coder_order"):
         if field in value and not _string_array(value.get(field)):
@@ -208,6 +207,12 @@ def validate(value: Any, subject: str) -> list[str]:
                 errors.append(f"code work missing required check: {check}")
         if all(check in checks for check in ("source_review", "code_contract")) and checks.index("source_review") > checks.index("code_contract"):
             errors.append("source_review must precede code_contract")
+        if execution_scope == "plot" and "analysis_evidence_pack" in checks:
+            errors.append("plot scope must not schedule analysis_evidence_pack")
+    elif execution_scope == "report-only" and isinstance(checks, list):
+        forbidden = {"source_review", "code_contract", "analysis_evidence_pack"} & set(checks)
+        if forbidden:
+            errors.append(f"report-only scope must not schedule code checks: {sorted(forbidden)}")
     if report and isinstance(checks, list):
         for check in ("report_contract", "figure_manifest", "docx_structure"):
             if check not in checks:
@@ -217,6 +222,8 @@ def validate(value: Any, subject: str) -> list[str]:
     if finish_policy is not None and (not isinstance(finish_policy, dict) or set(finish_policy) != {"requires_review", "requires_full"} or any(type(item) is not bool for item in finish_policy.values())):
         errors.append("finish_policy must contain boolean requires_review/requires_full")
     elif isinstance(finish_policy, dict) and isinstance(checks, list):
+        if execution_scope in {"report-only", "plot"} and finish_policy["requires_full"]:
+            errors.append("report-only/plot scope cannot require final_full")
         for enabled, required in (
             (finish_policy["requires_review"], {"independent_test", "scientific_review"}),
             (finish_policy["requires_full"], {"final_full"}),

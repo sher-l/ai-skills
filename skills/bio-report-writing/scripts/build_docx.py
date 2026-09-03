@@ -225,8 +225,8 @@ def build(plan: dict, pack: dict, output: Path, root: Path) -> None:
                 elif sid == "conclusion":
                     add_label_paragraph(document, "结论回收", point.get("interpretation"))
                 else:
-                    add_label_paragraph(document, "状态", point.get("status"))
-                    add_label_paragraph(document, "限制与待验证", point.get("limitations"))
+                    add_label_paragraph(document, "解释边界", point.get("limitations"))
+                    add_label_paragraph(document, "待验证用途", point.get("next_step"))
         elif sid == "outputs" or "outputs" in semantics:
             outputs = [item for point in points.values() for item in point.get("outputs", []) if isinstance(item, dict) and item.get("published")]
             table = document.add_table(rows=1, cols=3)

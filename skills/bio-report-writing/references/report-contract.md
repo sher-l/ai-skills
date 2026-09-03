@@ -30,7 +30,7 @@ provenance 与报告映射。代码、provenance、结果或图件互相冲突�
 | `audience` | 一个主要领域读者群体及其决策场景，不写“所有人” |
 | `terminology_sources` | 实际采用的术语来源，使用稳定路径、URL、DOI 或批准记录 |
 | `evidence_targets` | 用陈述式标题表达报告要交付的事实目标，并关联 `analysis_point_ids` |
-| `references` | 正文实际引用并支撑本次方法/解释的来源，记录名称、版本和来源地址 |
+| `references` | 正文实际引用并支撑本次方法/解释的来源，内部记录名称、版本和来源地址；可见文案只显示名称/版本/用途 |
 
 旧 `reader_questions` 只作为迁移输入，必须转换为陈述式 target；问号和任务句不进入标题、章节、图题、
 图注、摘要或结论。每个 target 必须映射到一个或多个公开表/图、数字证据和来源；无法映射即

@@ -1,5 +1,7 @@
 # bio-report-writing
 
+发布状态：开发中（非稳定版）。
+
 这是一个**报告 coder** skill：开发阶段写好唯一报告模板、固定正文、图题图注、结果表和 R/Python
 renderer；正式运行机械读取已发布结果和 provenance，填充 DOCX slots 并验收。它不是运行时 AI 写作器，
 也不重算统计或按图片外观补事实。

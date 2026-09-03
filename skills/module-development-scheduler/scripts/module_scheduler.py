@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Single CLI for internal module-development scheduling."""
+"""模块开发内部调度的统一 CLI。"""
 from __future__ import annotations
 
 import argparse
@@ -10,7 +10,7 @@ import validate_route_plan
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Choose one Matt route and the finite domain checks for a module task."
+        description="为模块任务选择一个 Matt 路径及有限领域检查。"
     )
     parser.add_argument("command", choices=("route", "validate"))
     args, rest = parser.parse_known_args(argv)

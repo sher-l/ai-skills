@@ -39,8 +39,9 @@
 | 参考文献 | `slot_references` | `[[REFERENCES]]` |
 | 软件/资源版本表标题/锚点 | `slot_table_versions_caption` | `[[TABLE:VERSIONS.CAPTION]]` |
 
-Note 默认使用独立一格框体：边框 `#5B9BD5`、填充 `#DDEBF7`、标签 `#2F75B5`。
-Note 文本必须紧邻首次相关结果，并在去掉颜色后仍能理解。
+Note 默认使用独立 callout table（标签行与正文行分开）：边框 `#5B9BD5`、填充 `#DDEBF7`、标签
+`#2F75B5`。Figure source 不是 callout，只是透明的普通图片段落，不得带边框、底色或缩进。Note 文本必须
+紧邻首次相关结果，并在去掉颜色后仍能理解；没有真实 Note 事实时删除整块。
 
 `F1` 图块（标题→完整源图→完整图注）是可复制单元；caption 字段仅供 renderer 组装和校验，不直接显示。
 仅在证据包发布对应图件时

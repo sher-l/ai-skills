@@ -5,7 +5,7 @@
   "required": ["schema_version", "figures"],
   "properties": {
     "schema_version": {"const": "0.1.0"},
-    "result_layout": {"enum": ["flat", "module_contract"]},
+    "result_layout": {"const": "flat"},
     "figures": {"type": "array", "items": {"$ref": "#/$defs/figure"}}
   },
   "$defs": {

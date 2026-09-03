@@ -1,13 +1,13 @@
 # Notices
 
-`module-development-scheduler` is an original adapter that records how this
-repository routes module work through Matt. It does not bundle or copy the
-upstream Matt skill implementation.
+`module-development-scheduler` is an original, standalone route skill. It
+records a Matt-compatible owner interface without bundling or copying any
+upstream implementation, and it has no runtime dependency on a temporary
+reference directory.
 
 Upstream interface consulted:
 
 - https://github.com/tt-a1i/matt-skills-with-to-goal
 
-The upstream project remains the lifecycle source of truth. This directory is
-an optional integration profile and has no runtime dependency on a temporary
-reference directory.
+The upstream project is only a consulted interface reference; this skill's
+route schema and checks travel with the package.

@@ -90,10 +90,8 @@ def validate(value: object, root: Path | None = None, final: bool = False) -> tu
         errors.append("schema_version must be 0.1.0")
     if value.get("quality_profile") not in {"draft", "release"}:
         errors.append("quality_profile must be draft or release")
-    if value.get("result_layout") not in {"flat", "module_contract"}:
-        errors.append("result_layout must be flat or module_contract")
-    if final and value.get("result_layout") != "flat":
-        errors.append("release result_layout must be flat; migrate the historical module_contract layout first")
+    if value.get("result_layout") != "flat":
+        errors.append("v2.2 result_layout must be flat; record historical nested paths only in migration evidence")
     layout = value.get("result_layout", "")
     for key in ("title", "audience"):
         if key in value and value[key] is not None and not isinstance(value[key], str):
@@ -361,7 +359,6 @@ def main(argv: list[str] | None = None) -> int:
             errors,
             warnings,
             domain="evidence",
-            fixes="补齐标记的事实或运行记录后重新运行校验",
         )
     return code
 
