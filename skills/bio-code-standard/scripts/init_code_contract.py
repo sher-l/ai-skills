@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create a small, self-contained R/Python code contract workspace."""
+"""创建独立的 R/Python 代码合同工作区。"""
 from __future__ import annotations
 
 import argparse
@@ -86,11 +86,12 @@ def main(argv: list[str] | None = None) -> int:
 
     output = args.output.resolve()
     if output.exists() and any(output.iterdir()):
-        print(f"INIT_CODE_BLOCKED: output is not empty: {output}", file=sys.stderr)
-        return 2
+        print(f"错误类型: OUTPUT_ERROR\n错误内容: 输出目录非空: {output}\n修复建议: 选择空目录或确认后清理目标\n退出码: 1", file=sys.stderr)
+        return 1
     languages = {item.strip().lower() for item in args.languages.split(",") if item.strip()}
     if languages - {"r", "python"} or not languages:
-        print("INIT_CODE_BLOCKED: languages must contain r and/or python", file=sys.stderr)
+        print("错误类型: CONFIG_ERROR\n错误内容: languages 只能包含 r 和/或 python；实际值="
+              f"{args.languages}\n修复建议: 使用 --languages r、python 或 r,python\n退出码: 2", file=sys.stderr)
         return 2
     output.mkdir(parents=True, exist_ok=True)
     contract, pack = starter(args.module, args.quality_profile, args.effort_profile, languages, args.with_plot)
@@ -127,7 +128,7 @@ def main(argv: list[str] | None = None) -> int:
         shutil.copyfile(TEMPLATES / "python_stage.py", output / "python_stage.py")
     # 模块尚无源码时不要伪造审查记录；第一步必须针对真实模块根目录执行
     # ``source-review init``，否则合同保持 EVIDENCE_NEEDED。
-    print(json.dumps({"status": "DRAFT", "module": args.module, "output": str(output)}, ensure_ascii=False))
+    print(json.dumps({"status": "DRAFT", "module": args.module, "output": str(output), "exit_code": 0}, ensure_ascii=False))
     return 0
 
 

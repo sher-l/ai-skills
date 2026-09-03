@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Create and validate the portable source-review gate for a module.
+"""创建并校验模块的可移植源码审定门禁。
 
-The command deliberately does not fetch the network.  It records the official
-URLs and execution receipts supplied by the analyst, then checks that the
-three-way claims in ``doc/source-review.md`` are complete and non-conflicting.
+命令不会主动联网；只记录分析人员提供的官方 URL 和执行凭证，并检查
+``doc/source-review.md`` 中官方定义、源码和执行三方事实是否完整且无冲突。
 """
 from __future__ import annotations
 
@@ -43,7 +42,7 @@ def digest(path: Path) -> str:
 
 
 def source_inventory(root: Path) -> list[dict[str, str | int]]:
-    """Return a stable inventory of R/Rmd/Python source files under root."""
+    """返回根目录下稳定排序的 R/Rmd/Python 源码清单。"""
     root = root.resolve()
     if not root.is_dir():
         raise ValueError(f"source root does not exist: {root}")
@@ -84,7 +83,7 @@ def _heading_key(value: str) -> str:
 
 
 def _table(lines: list[str], heading: str) -> list[dict[str, str]]:
-    """Read the first Markdown table following a level-two heading."""
+    """读取二级标题后的第一张 Markdown 表格。"""
     start = None
     wanted = _heading_key(heading)
     for index, line in enumerate(lines):
@@ -152,14 +151,15 @@ def _diag(message: str, subject: str, severity: str = "error") -> dict[str, obje
 
 
 def validate_document(path: Path, root: Path | None = None, final: bool = False) -> dict[str, object]:
-    """Validate a source-review document and return a machine-readable result."""
+    """校验源码审定文档并返回机器可读结果。"""
     errors: list[str] = []
     warnings: list[str] = []
     try:
         text = path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
-        result = {"status": "BLOCKED", "errors": [f"cannot read source review: {exc}"], "warnings": []}
-        result["diagnostics"] = [_diag(result["errors"][0], str(path))]
+        errors = [f"cannot read source review: {exc}"]
+        result = {"status": "BLOCKED", "errors": errors, "warnings": [], "exit_code": diagnostic_output.exit_code(errors, status="BLOCKED", domain="source")}
+        result["diagnostics"] = [_diag(errors[0], str(path))]
         result["summary"] = {"errors": 1, "warnings": 0}
         return result
 
@@ -333,6 +333,7 @@ def validate_document(path: Path, root: Path | None = None, final: bool = False)
         "errors": errors,
         "warnings": warnings,
         "diagnostics": diagnostics,
+        "exit_code": diagnostic_output.exit_code(errors, warnings, status=status, domain="source"),
         "summary": {"errors": len(errors), "warnings": len(warnings)},
     }
 
@@ -415,14 +416,17 @@ def init_command(args: argparse.Namespace) -> int:
         return 2
     if output.exists() and not args.force:
         print("错误类型: OUTPUT_ERROR\n错误内容: 输出文件已存在（审定后才可使用 --force）: "
-              f"{output}\n修复建议: 先备份并确认后使用 --force，或选择新路径\n退出码: 2", file=sys.stderr)
-        return 2
+              f"{output}\n修复建议: 先备份并确认后使用 --force，或选择新路径\n退出码: 1", file=sys.stderr)
+        return 1
     try:
         render_document(args.module, root, output)
-    except (OSError, ValueError) as exc:
-        print(f"错误类型: OUTPUT_ERROR\n错误内容: {exc}\n修复建议: 检查源码目录和文档写入权限\n退出码: 2", file=sys.stderr)
+    except ValueError as exc:
+        print(f"错误类型: INPUT_ERROR\n错误内容: {exc}\n修复建议: 检查源码目录是否包含可读的 R/Rmd/Python 文件\n退出码: 2", file=sys.stderr)
         return 2
-    print(json.dumps({"status": "DRAFT", "path": str(output), "files": len(source_inventory(root))}, ensure_ascii=False))
+    except OSError as exc:
+        print(f"错误类型: OUTPUT_ERROR\n错误内容: {exc}\n修复建议: 检查文档目标目录的写入权限\n退出码: 1", file=sys.stderr)
+        return 1
+    print(json.dumps({"status": "DRAFT", "path": str(output), "files": len(source_inventory(root)), "exit_code": 0}, ensure_ascii=False))
     return 0
 
 
@@ -454,7 +458,7 @@ def main(argv: list[str] | None = None) -> int:
             domain="source",
             fixes="编辑 doc/source-review.md 标记的行后重新运行 source-review validate",
         )
-    return 0 if result["status"] == "PASS" else 2
+    return int(result.get("exit_code", diagnostic_output.exit_code(result["errors"], result["warnings"], status=result["status"], domain="source")))
 
 
 if __name__ == "__main__":

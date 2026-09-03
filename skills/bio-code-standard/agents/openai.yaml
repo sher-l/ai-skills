@@ -1,4 +1,4 @@
 interface:
   display_name: "生信代码规范"
   short_description: "R Python 生信分析代码统计逻辑绘图与证据规范"
-  default_prompt: "使用 $bio-code-standard v2.2：先从给定 R/Python 源码运行 source-review init，填写并通过 doc/source-review.md 的官方定义↔源码↔执行证据核对；冲突返回 DECISION_REQUIRED。随后按声明的 calculate/可选 plot 合同运行 validator，draft 返回 EVIDENCE_NEEDED，release/final 才 PASS。失败先输出错误类型、具体内容、修复建议，再输出退出码，并写入 JSON 的 error_type/content。新增或修改的业务代码注释统一使用简体中文，规范技术标识保留英文。"
+  default_prompt: "使用 $bio-code-standard v2.2：先从给定 R/Python 源码运行 source-review init，填写并通过 doc/source-review.md 的官方定义↔源码↔执行证据核对；冲突返回 DECISION_REQUIRED。随后按声明的 calculate/可选 plot 合同运行 validator，draft 返回 EVIDENCE_NEEDED，release/final 才 PASS。失败先输出错误类型、具体内容、修复建议，再输出退出码（0成功、1一般运行/输出、2输入配置证据决策校验、3依赖环境），并写入 JSON 的 error_type/content/exit_code。新增或修改的业务代码注释统一使用简体中文，规范技术标识保留英文。"

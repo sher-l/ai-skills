@@ -8,6 +8,18 @@ import sys
 from typing import Iterable
 
 
+EXIT_CODES = {
+    "SUCCESS": 0,
+    "RUNTIME_ERROR": 1,
+    "OUTPUT_ERROR": 1,
+    "INPUT_ERROR": 2,
+    "CONFIG_ERROR": 2,
+    "EVIDENCE_ERROR": 2,
+    "DECISION_REQUIRED": 2,
+    "DEPENDENCY_ERROR": 3,
+}
+
+
 def classify(message: str, domain: str = "runtime") -> str:
     """根据校验上下文把一条消息归入稳定的错误类型。"""
     text = message.lower()
@@ -15,8 +27,14 @@ def classify(message: str, domain: str = "runtime") -> str:
         return "DECISION_REQUIRED"
     if domain == "source":
         return "EVIDENCE_ERROR"
+    if any(word in text for word in ("dependency", "runtime_install", "environment", "interpreter", "package")):
+        return "DEPENDENCY_ERROR"
+    if text.startswith("cannot read") or text.startswith("invalid json"):
+        return "INPUT_ERROR"
     if domain == "figure":
         return "OUTPUT_ERROR"
+    if any(word in text for word in ("cannot read", "does not exist", "not found", "file", "path")):
+        return "INPUT_ERROR"
     if "source_review" in text:
         return "EVIDENCE_ERROR"
     if any(word in text for word in ("dependency", "runtime_install", "environment", "interpreter", "package")):
@@ -76,6 +94,29 @@ def entries(
     return result
 
 
+def exit_code(
+    errors: Iterable[str],
+    warnings: Iterable[str] = (),
+    *,
+    status: str = "BLOCKED",
+    domain: str = "runtime",
+) -> int:
+    """把诊断归入约定的四个进程退出码。"""
+    error_list = list(errors)
+    if not error_list and status == "PASS":
+        return EXIT_CODES["SUCCESS"]
+    kinds = {classify(message, domain) for message in error_list}
+    if "DEPENDENCY_ERROR" in kinds:
+        return EXIT_CODES["DEPENDENCY_ERROR"]
+    if kinds & {"INPUT_ERROR", "CONFIG_ERROR", "EVIDENCE_ERROR", "DECISION_REQUIRED"}:
+        return EXIT_CODES["CONFIG_ERROR"]
+    if kinds & {"RUNTIME_ERROR", "OUTPUT_ERROR"}:
+        return EXIT_CODES["RUNTIME_ERROR"]
+    if status in {"EVIDENCE_NEEDED", "DRAFT", "BLOCKED", "DECISION_REQUIRED"} or list(warnings):
+        return EXIT_CODES["CONFIG_ERROR"]
+    return EXIT_CODES["RUNTIME_ERROR"]
+
+
 def print_result(
     prefix: str,
     status: str,
@@ -88,7 +129,6 @@ def print_result(
     """输出错误类型、内容、修复建议，最后输出机器退出码。"""
     error_list = list(errors)
     warning_list = list(warnings)
-    exit_code = 0 if status == "PASS" and not error_list else 2
     for message in error_list:
         print(
             f"错误类型: {classify(message, domain)}\n错误内容: {message}\n修复建议: {fixes}",
@@ -100,4 +140,4 @@ def print_result(
             file=sys.stdout,
         )
     print(f"{prefix}_{status} errors={len(error_list)} warnings={len(warning_list)}")
-    print(f"退出码: {exit_code}", file=sys.stderr)
+    print(f"退出码: {exit_code(error_list, warning_list, status=status, domain=domain)}", file=sys.stderr)

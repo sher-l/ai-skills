@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Single CLI for the bio-code-standard contract tools."""
+"""生信代码合同工具的统一命令行入口。"""
 from __future__ import annotations
 
 import argparse

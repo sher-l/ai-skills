@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a R/Python code contract after the module source review gate."""
+"""在源码审定门禁之后校验 R/Python 代码合同。"""
 from __future__ import annotations
 
 import argparse
@@ -31,7 +31,7 @@ def fail(errors: list[str], message: str) -> None:
 
 
 def validate_output_declarations(value: dict, errors: list[str], warnings: list[str], *, final: bool) -> None:
-    """Require a purpose and consumer for every public output declaration."""
+    """要求每个公开产物声明用途和消费者。"""
     collections: list[tuple[str, object]] = [("outputs", value.get("outputs"))]
     for index, stage in enumerate(value.get("stages", []) if isinstance(value.get("stages"), list) else []):
         if isinstance(stage, dict):
@@ -243,7 +243,7 @@ def diagnostics(errors: list[str], warnings: list[str], subject: str) -> list[di
 
 
 def _source_review_result(contract: object, root: Path, final: bool, required: bool = False) -> tuple[list[str], list[str]]:
-    """Run the optional Step-0 review without making it a second dependency."""
+    """运行可选的 Step 0 审定，但不把它变成重复依赖。"""
     if not isinstance(contract, dict):
         return [], []
     review = contract.get("source_review")
@@ -339,7 +339,8 @@ def main(argv: list[str] | None = None) -> int:
         status = "PASS"
     else:
         status = "BLOCKED"
-    result = {"status": status, "errors": errors, "warnings": warnings, "diagnostics": diagnostics(errors, warnings, str(args.contract)), "summary": {"errors": len(errors), "warnings": len(warnings)}}
+    code = diagnostic_output.exit_code(errors, warnings, status=status, domain="contract")
+    result = {"status": status, "errors": errors, "warnings": warnings, "diagnostics": diagnostics(errors, warnings, str(args.contract)), "exit_code": code, "summary": {"errors": len(errors), "warnings": len(warnings)}}
     if args.as_json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
@@ -351,7 +352,7 @@ def main(argv: list[str] | None = None) -> int:
             domain="contract",
             fixes="编辑标记的合同或源码后重新运行校验",
         )
-    return 0 if status == "PASS" and not errors else 2
+    return code
 
 
 if __name__ == "__main__":

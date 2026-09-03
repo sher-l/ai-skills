@@ -11,6 +11,8 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
+sys.path.insert(0, str(SCRIPTS))
+import diagnostic_output
 
 
 def run(script: str, *args: str) -> subprocess.CompletedProcess[str]:
@@ -31,7 +33,7 @@ class CodeSkillSmoke(unittest.TestCase):
     def test_unified_cli_exposes_evidence_validator(self) -> None:
         result = run("bio_code.py", "evidence", "--help")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("evidence pack", result.stdout.lower())
+        self.assertIn("证据包", result.stdout)
 
     def test_init_and_contract_validation(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -133,6 +135,14 @@ class CodeSkillSmoke(unittest.TestCase):
             self.assertTrue(payload["diagnostics"])
             self.assertIn("error_type", payload["diagnostics"][0])
             self.assertIn("content", payload["diagnostics"][0])
+            self.assertEqual(payload["exit_code"], 2)
+            self.assertIn("退出码: 2", plain.stderr)
+
+    def test_error_exit_code_categories(self) -> None:
+        self.assertEqual(diagnostic_output.exit_code([], status="PASS"), 0)
+        self.assertEqual(diagnostic_output.exit_code(["runtime failed"], domain="runtime"), 1)
+        self.assertEqual(diagnostic_output.exit_code(["missing config field"], domain="contract"), 2)
+        self.assertEqual(diagnostic_output.exit_code(["dependency package is unavailable"], domain="runtime"), 3)
 
     def test_result_layout_requires_flat_numbered_paths(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

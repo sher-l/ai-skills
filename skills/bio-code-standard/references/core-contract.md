@@ -56,7 +56,8 @@
   `INPUT_ERROR`、`CONFIG_ERROR`、`DEPENDENCY_ERROR`、`RUNTIME_ERROR`、`OUTPUT_ERROR`、
   `EVIDENCE_ERROR` 或 `DECISION_REQUIRED`。stderr、当前阶段日志和机器记录必须同时保留
   阶段/对象、具体路径或字段、实际值、证据位置和修复建议。JSON 在兼容
-  `code/subject/evidence/supportedFixes` 的同时增加 `error_type` 与 `content`；
+  `code/subject/evidence/supportedFixes` 的同时增加 `error_type` 与 `content`；退出码固定为
+  `0` 成功、`1` 一般运行或输出错误、`2` 输入/配置/证据/决策校验失败、`3` 依赖/环境异常；
   退出码只供上游程序判断，不能单独作为错误说明；
   禁止静默 fallback、全局 warning 抑制、`setwd` 链和运行时依赖安装。
 - 成功发布前扫描绝对路径、占位符、任务句、乱码、错误指标标签和未声明输出；源代码

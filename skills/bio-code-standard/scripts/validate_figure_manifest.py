@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate figure declarations and their real, reproducible sources."""
+"""校验图件声明及其真实、可复现的来源。"""
 from __future__ import annotations
 
 import argparse
@@ -164,11 +164,13 @@ def main(argv: list[str] | None = None) -> int:
     else:
         # 草稿 manifest 只是脚手架，不能作为发布 PASS。
         status = "EVIDENCE_NEEDED"
+    code = diagnostic_output.exit_code(errors, warnings, status=status, domain="figure")
     result = {
         "status": status,
         "errors": errors,
         "warnings": warnings,
         "diagnostics": make_diagnostics(errors, warnings, str(args.manifest)),
+        "exit_code": code,
         "summary": {"errors": len(errors), "warnings": len(warnings)},
     }
     if args.as_json:
@@ -182,7 +184,7 @@ def main(argv: list[str] | None = None) -> int:
             domain="figure",
             fixes="编辑图件合同或真实来源后重新运行校验",
         )
-    return 0 if status == "PASS" else 2
+    return code
 
 
 if __name__ == "__main__":

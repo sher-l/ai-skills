@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Validate the shared, machine-readable analysis evidence pack handoff.
+"""校验共享的机器可读分析证据包交接。
 
-This adapter checks facts, paths and provenance only.  Reader-facing prose,
-sectioning and interpretation remain the responsibility of the report skill.
+本适配器只检查事实、路径和 provenance；面向读者的正文、章节和解释由报告 skill 负责。
 """
 from __future__ import annotations
 
@@ -344,11 +343,13 @@ def main(argv: list[str] | None = None) -> int:
         status = "PASS"
     else:
         status = "BLOCKED"
+    code = diagnostic_output.exit_code(errors, warnings, status=status, domain="evidence")
     result = {
         "status": status,
         "errors": errors,
         "warnings": warnings,
         "diagnostics": diagnostics(errors, warnings, str(args.pack)),
+        "exit_code": code,
         "summary": {"errors": len(errors), "warnings": len(warnings)},
     }
     if args.as_json:
@@ -362,7 +363,7 @@ def main(argv: list[str] | None = None) -> int:
             domain="evidence",
             fixes="补齐标记的事实或运行记录后重新运行校验",
         )
-    return 0 if status == "PASS" else 2
+    return code
 
 
 if __name__ == "__main__":
